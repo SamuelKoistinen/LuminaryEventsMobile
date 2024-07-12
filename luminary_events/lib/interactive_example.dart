@@ -16,55 +16,29 @@ class _InteractiveExampleState extends State<InteractiveExample> {
 
   List<PersistentTabConfig> _tabs() => [
         PersistentTabConfig(
+          screen: const MainScreen2(),
+          item: ItemConfig(
+            icon: const Icon(Icons.calendar_month_outlined),
+            title: "Kalenteri",
+            activeForegroundColor: Colors.teal,
+            inactiveForegroundColor: Colors.grey,
+          ),
+        ),
+        PersistentTabConfig(
           screen: const MainScreen(),
           item: ItemConfig(
             icon: const Icon(Icons.home),
-            title: "Home",
+            title: "Etusivu",
             activeForegroundColor: Colors.blue,
             inactiveForegroundColor: Colors.grey,
           ),
         ),
         PersistentTabConfig(
-          screen: const MainScreen(),
+          screen: const MainScreen3(),
           item: ItemConfig(
-            icon: const Icon(Icons.search),
-            title: "Search",
+            icon: const Icon(Icons.warehouse),
+            title: "Varasto",
             activeForegroundColor: Colors.teal,
-            inactiveForegroundColor: Colors.grey,
-          ),
-        ),
-        PersistentTabConfig.noScreen(
-          item: ItemConfig(
-            icon: const Icon(Icons.add),
-            title: "Add",
-            activeForegroundColor: Colors.blueAccent,
-            inactiveForegroundColor: Colors.grey,
-          ),
-          onPressed: (context) {
-            pushWithNavBar(
-              context,
-              DialogRoute(
-                context: context,
-                builder: (context) => const ExampleDialog(),
-              ),
-            );
-          },
-        ),
-        PersistentTabConfig(
-          screen: const MainScreen(),
-          item: ItemConfig(
-            icon: const Icon(Icons.message),
-            title: "Messages",
-            activeForegroundColor: Colors.deepOrange,
-            inactiveForegroundColor: Colors.grey,
-          ),
-        ),
-        PersistentTabConfig(
-          screen: const MainScreen(),
-          item: ItemConfig(
-            icon: const Icon(Icons.settings),
-            title: "Settings",
-            activeForegroundColor: Colors.indigo,
             inactiveForegroundColor: Colors.grey,
           ),
         ),

@@ -28,24 +28,17 @@ class PersistenBottomNavBarDemo extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pushNamed("/minimal"),
-                  child: const Text("Show Minimal Example"),
-                ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () =>
                       Navigator.of(context).pushNamed("/interactive"),
-                  child: const Text("Show Interactive Example"),
+                  child: const Text("Reroute Button Example"),
                 ),
               ],
             ),
           ),
         ),
-        routes: {
-          "/minimal": (context) => const MinimalExample(),
-          "/interactive": (context) => const InteractiveExample(),
-        },
+        routes: {"/interactive": (context) => const InteractiveExample()},
       );
 }
 
@@ -68,7 +61,7 @@ class MinimalExample extends StatelessWidget {
           ),
         ),
         PersistentTabConfig(
-          screen: const MainScreen(),
+          screen: const MainScreen3(),
           item: ItemConfig(
             icon: const Icon(Icons.warehouse),
             title: "Varasto",

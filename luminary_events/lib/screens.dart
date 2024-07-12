@@ -9,7 +9,7 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text("Tab Main Screen")),
+        appBar: AppBar(title: const Text("Main Screen")),
         backgroundColor: Colors.indigo,
         body: ListView(
           padding: const EdgeInsets.all(16)
@@ -18,26 +18,7 @@ class MainScreen extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 30, vertical: 20),
               child: TextField(
-                decoration: InputDecoration(hintText: "Test Text Field"),
-              ),
-            ),
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  if (useRouter) {
-                    context.go("/settings/detail");
-                  } else {
-                    pushScreen(
-                      context,
-                      withNavBar: true,
-                      settings: const RouteSettings(name: "/home"),
-                      screen: const MainScreen2(),
-                      pageTransitionAnimation:
-                          PageTransitionAnimation.scaleRotate,
-                    );
-                  }
-                },
-                child: const Text("Go to Second Screen with Navbar"),
+                decoration: InputDecoration(hintText: "Test Text Field 1"),
               ),
             ),
             Center(
@@ -75,7 +56,7 @@ class MainScreen extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text("Push bottom sheet on TOP of Nav Bar"),
+                child: const Text("Popup From Bottom ONTOP Navbar"),
               ),
             ),
             Center(
@@ -95,7 +76,7 @@ class MainScreen extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text("Push bottom sheet BEHIND the Nav Bar"),
+                child: const Text("Popup From Bottom UNDER Navbar"),
               ),
             ),
             Center(
@@ -109,7 +90,7 @@ class MainScreen extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text("Push Dynamic/Modal Screen"),
+                child: const Text("Push Popup Screen"),
               ),
             ),
           ],
@@ -143,7 +124,7 @@ class MainScreen2 extends StatelessWidget {
                     );
                   }
                 },
-                child: const Text("Go to Third Screen with Navbar"),
+                child: const Text("Popup Screen (Tetriary)"),
               ),
             ),
             Center(
@@ -176,7 +157,7 @@ class MainScreen3 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text("Tertiary Screen")),
+        appBar: AppBar(title: const Text("Third Screen")),
         backgroundColor: Colors.deepOrangeAccent,
         body: Center(
           child: ElevatedButton(
