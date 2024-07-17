@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
+import "package:luminary_events/env.dart";
 import "package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart";
 import 'package:table_calendar/table_calendar.dart';
 
@@ -173,9 +174,9 @@ class MainScreen3 extends StatelessWidget {
         body: Center(
           child: ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              debugPrint(Env.passwordkey);
             },
-            child: const Text("Go Back to Second Screen"),
+            child: Text(Env.apikey),
           ),
         ),
       );
