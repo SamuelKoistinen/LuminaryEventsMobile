@@ -2,3 +2,4 @@
 .env
 
 luminary_events/lib/env.g.dart
+luminary_events/env
