@@ -2,7 +2,6 @@ import "package:flutter/material.dart";
 import "package:go_router/go_router.dart";
 import "package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart";
 import 'CalendarSivu.dart';
-import 'env.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key, this.useRouter = false});
@@ -96,27 +95,6 @@ class MainScreen extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      );
-}
-
-
-
-
-class MainScreen3 extends StatelessWidget {
-  const MainScreen3({super.key});
-  
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text("Varasto")),
-        backgroundColor: Colors.deepOrangeAccent,
-        body: Center(
-          child: ElevatedButton(
-            onPressed: () {
-              debugPrint(Env.passwordkey);
-            },
-            child: Text(Env.apikey),
-          ),
         ),
       );
 }

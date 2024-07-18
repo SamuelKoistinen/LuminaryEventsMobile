@@ -3,6 +3,7 @@ import "package:luminary_events/screens.dart";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart";
+import "VarastoSivu.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
