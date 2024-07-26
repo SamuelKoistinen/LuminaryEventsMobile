@@ -36,7 +36,7 @@ class _InteractiveExampleState extends State<InteractiveExample> {
           ),
         ),
         PersistentTabConfig(
-          screen: const MainScreen3(),
+          screen: MainScreen3(),
           item: ItemConfig(
             icon: const Icon(Icons.warehouse),
             title: "Varasto",
