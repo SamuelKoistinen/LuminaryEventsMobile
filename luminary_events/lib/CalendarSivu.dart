@@ -180,10 +180,8 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                 onPageChanged: (focusedDay) {
                   _focusedDay = focusedDay;
                 },
-                // Ici, vous pouvez personnaliser l'apparence et le comportement du calendrier selon vos besoins
               ),
               const SizedBox(height: 10.0),
-
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
@@ -259,12 +257,11 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                   valueListenable: _selectedEvents,
                 ),
               )
-
-              //  Vous pouvez également inclure des fonctionnalités telles que la modification ou l'annulation de réservations directement depuis cette liste
             ],
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
+          heroTag: "btn2",
           onPressed: () {
             // todo: Show dialog to user to input event
             showDialog(

@@ -60,6 +60,7 @@ class _InteractiveExampleState extends State<InteractiveExample> {
           const NeumorphicProperties(),
         ),
         floatingActionButton: FloatingActionButton(
+          heroTag: "btn1",
           onPressed: () => showDialog(
             context: context,
             builder: (context) => Dialog(
