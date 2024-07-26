@@ -18,7 +18,7 @@ class _InteractiveExampleState extends State<InteractiveExample> {
 
   List<PersistentTabConfig> _tabs() => [
         PersistentTabConfig(
-          screen: const MainScreen2(),
+          screen: const CalendarSivu(),
           item: ItemConfig(
             icon: const Icon(Icons.calendar_month_outlined),
             title: "Kalenteri",

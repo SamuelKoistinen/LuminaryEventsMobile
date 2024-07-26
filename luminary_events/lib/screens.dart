@@ -31,7 +31,7 @@ class MainScreen extends StatelessWidget {
                     pushScreen(
                       context,
                       settings: const RouteSettings(name: "/home"),
-                      screen: const MainScreen2(),
+                      screen: const CalendarSivu(),
                       pageTransitionAnimation:
                           PageTransitionAnimation.scaleRotate,
                     );
