@@ -35,6 +35,7 @@ class CalendarSivu extends StatefulWidget {
 }
 
 class _EventCalendarScreenState extends State<CalendarSivu> {
+  String _enteredText = '';
   late final ValueNotifier<List<Event>> _selectedEvents;
   CalendarFormat _calendarFormat = CalendarFormat.month;
   Map<DateTime, List<Event>> events = {};
@@ -45,17 +46,21 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
   DateTime? _rangeStart;
   DateTime? _rangeEnd;
 
+  //This is the controller used to edit the new events text field
+
+  final TextEditingController _textFieldController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
 
     _selectedDay = _focusedDay;
     _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
-    loadPreviousEvents();
   }
 
   @override
   void dispose() {
+    _textFieldController.dispose();
     _selectedEvents.dispose();
     super.dispose();
   }
@@ -105,15 +110,9 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
     }
   }
 
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  void clearController() {
-    _titleController.clear();
-    _descriptionController.clear();
-  }
-
   @override
   Widget build(BuildContext context) {
+    fetchData();
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(title: const Text("Tapahtumakalenteri")),
@@ -135,7 +134,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                   ),
                 ),
               ),
-              TableCalendar(
+              TableCalendar<Event>(
                 headerStyle: HeaderStyle(
                     formatButtonDecoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
@@ -143,8 +142,8 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                         color: Theme.of(context).colorScheme.tertiaryContainer),
                     decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.onInverseSurface)),
-                firstDay: DateTime.utc(2000, 12, 31),
-                lastDay: DateTime.utc(2030, 01, 01),
+                firstDay: kFirstDay,
+                lastDay: kLastDay,
                 focusedDay: _focusedDay,
                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                 rangeStartDay: _rangeStart,
@@ -222,7 +221,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                   child: Text.rich(
                                                       TextSpan(children: [
                                                     TextSpan(
-                                                      text: e.description,
+                                                      text: e.customerName,
                                                     ),
                                                   ])),
                                                 )
@@ -297,32 +296,20 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
       title: const Text('Uusi tapahtuma'),
       content: Padding(
         padding: const EdgeInsets.all(8),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(helperText: 'Nimi'),
-            ),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(helperText: 'Kuvaus'),
-            ),
-          ],
+        child: TextField(
+          controller: _textFieldController,
+          onChanged: (value) {
+            setState(() {
+              _enteredText = value; // update the entered text
+            });
+          },
         ),
       ),
       actions: [
         ElevatedButton(
             onPressed: () {
-              events.addAll({
-                _selectedDay!: [
-                  ..._selectedEvents.value,
-                  Event(
-                      title: _titleController.text,
-                      description: _descriptionController.text)
-                ]
-              });
-              _selectedEvents.value = _getEventsForDay(_selectedDay!);
-              clearController();
+              _addEvent(_selectedDay ?? DateTime.now());
+              _clearTextField();
               context.pop();
             },
             child: const Text('Lähetä'))
@@ -330,10 +317,37 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
     );
   }
 
-  void loadPreviousEvents() {
-    events = {
-      _selectedDay!: [const Event(title: '', description: '')],
-      _selectedDay!: [const Event(title: '', description: '')]
-    };
+  void _deleteEvent(DateTime day, Event event) {
+    setState(() {
+      kEvents[day]?.remove(event);
+    });
+  }
+
+  void _clearTextField() {
+    _textFieldController.clear();
+  }
+
+  void _addEvent(DateTime selectedDate) {
+    if (kEvents.containsKey(selectedDate)) {
+      kEvents[selectedDate]!.add(Event(
+          customerName: '',
+          title: '',
+          orderStartDate: '',
+          orderLengthDays: 0,
+          orderEndDate: '',
+          contents: []));
+    } else {
+      kEvents[selectedDate] = [
+        Event(
+            customerName: '',
+            title: '',
+            orderStartDate: '',
+            orderLengthDays: 0,
+            orderEndDate: '',
+            contents: [])
+      ];
+    }
+
+    setState(() {});
   }
 }
