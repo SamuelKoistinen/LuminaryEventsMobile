@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:expandable/expandable.dart';
+import 'package:http/http.dart' as http;
 import "package:flutter/material.dart";
 import 'env.dart';
 
@@ -23,6 +26,73 @@ class MainScreen3 extends StatefulWidget {
 class _MainScreen3State extends State<MainScreen3> {
   bool editModeSwitch = false;
   bool unsavedChanges = false;
+
+  final TextEditingController _controller = TextEditingController();
+
+  List unsavedChangesList = [];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  List deviceCategories = [
+    {"name": 'kokoääni', "devices": []},
+    {"name": 'sub', "devices": []},
+    {"name": 'dj', "devices": []},
+    {"name": 'lavatekniikka', "devices": []},
+  ];
+
+  getDatabaseInfo() async {
+    for (var category in deviceCategories) {
+      category['devices'].clear();
+    }
+    final response =
+        await http.get(Uri.parse("https://mekelektro.com/devices"));
+    if (response.statusCode == 200) {
+      final List parsedList = json.decode(response.body);
+      for (var device in parsedList) {
+        for (var category in deviceCategories) {
+          if (device['type'] == category['name']) {
+            category['devices'].add(device);
+            print("device added");
+          }
+        }
+      }
+      print(deviceCategories);
+      setState(() => {});
+    } else {
+      throw Exception('Failed to load database info');
+    }
+  }
+
+  sendUpdatedData() async {
+    for (var device in unsavedChangesList) {
+      print(device);
+      print(device['id']);
+      print(device['current_stock']);
+      final response = await http.put(
+        Uri.parse("https://mekelektro.com/devices/${device['id']}"),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'current_stock': device['current_stock'],
+        }),
+      );
+      if (response.statusCode == 201) {
+      } else {
+        print(response.body);
+        print(response.statusCode);
+        throw Exception('Failed to send updated data');
+      }
+    }
+    unsavedChangesList.clear();
+    setState(() {
+      getDatabaseInfo();
+    });
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -49,7 +119,7 @@ class _MainScreen3State extends State<MainScreen3> {
                                   unsavedChanges = value;
                                 });
                               }),
-                          unsavedChanges
+                          unsavedChangesList.isNotEmpty
                               ? Text('Unsaved changes',
                                   style: TextStyle(
                                       fontStyle: FontStyle.italic,
@@ -65,7 +135,7 @@ class _MainScreen3State extends State<MainScreen3> {
                             children: editModeSwitch
                                 ? [
                                     IconButton(
-                                        onPressed: unsavedChanges
+                                        onPressed: unsavedChangesList.isNotEmpty
                                             ? () {
                                                 showDialog(
                                                     context: context,
@@ -97,8 +167,8 @@ class _MainScreen3State extends State<MainScreen3> {
                                                                           () {
                                                                         setState(
                                                                             () {
-                                                                          unsavedChanges =
-                                                                              false;
+                                                                          unsavedChangesList
+                                                                              .clear();
                                                                         });
                                                                         Navigator.pop(
                                                                             context);
@@ -113,7 +183,7 @@ class _MainScreen3State extends State<MainScreen3> {
                                         icon: Icon(
                                             Icons.settings_backup_restore)),
                                     IconButton(
-                                        onPressed: unsavedChanges
+                                        onPressed: unsavedChangesList.isNotEmpty
                                             ? () {
                                                 showDialog(
                                                     context: context,
@@ -143,11 +213,7 @@ class _MainScreen3State extends State<MainScreen3> {
                                                                   ElevatedButton(
                                                                       onPressed:
                                                                           () {
-                                                                        setState(
-                                                                            () {
-                                                                          unsavedChanges =
-                                                                              false;
-                                                                        });
+                                                                        sendUpdatedData();
                                                                         Navigator.pop(
                                                                             context);
                                                                       },
@@ -169,26 +235,121 @@ class _MainScreen3State extends State<MainScreen3> {
               flex: 10,
               child: Container(
                 color: Colors.indigo,
-                child: Column(
-                  children: [
-                    Card(
-                      child: Container(
-                          child: ExpandableTheme(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      for (var category in deviceCategories)
+                        Card(
+                          child: Container(
+                            child: ExpandableTheme(
                               data: ExpandableThemeData(hasIcon: false),
                               child: ExpandablePanel(
-                                  header: Text('Header'),
-                                  collapsed:
-                                      Container(child: Text('collapsed')),
-                                  expanded:
-                                      Container(child: Text('expanded'))))),
-                    )
-                  ],
+                                header: Text(category['name']),
+                                collapsed: Container(
+                                  child: Text('collapsed'),
+                                ),
+                                expanded: Column(
+                                  children: [
+                                    for (var device in category['devices'])
+                                      Card(
+                                        child: Container(
+                                          child: ExpandableTheme(
+                                            data: ExpandableThemeData(
+                                                hasIcon: false),
+                                            child: ExpandablePanel(
+                                              header: Text(device['name']),
+                                              collapsed: Container(
+                                                child: Text('collapsed'),
+                                              ),
+                                              expanded: Row(children: [
+                                                Column(
+                                                  children: [
+                                                    Text('Type: ' +
+                                                        device['type']),
+                                                    Text('Description: ' +
+                                                        device['description']),
+                                                    Text('Stock: ' +
+                                                        device['current_stock']
+                                                            .toString() +
+                                                        ' / ' +
+                                                        device['total_stock']
+                                                            .toString()),
+                                                  ],
+                                                ),
+                                                ElevatedButton(
+                                                    onPressed: editModeSwitch
+                                                        ? () {
+                                                            showDialog(
+                                                                context:
+                                                                    context,
+                                                                builder: (context) =>
+                                                                    AlertDialog(
+                                                                        title: Text(
+                                                                            'Muokkaa laitetta'),
+                                                                        contentPadding: const EdgeInsets
+                                                                            .all(
+                                                                            20.0),
+                                                                        content:
+                                                                            TextField(
+                                                                          controller:
+                                                                              _controller,
+                                                                          decoration:
+                                                                              InputDecoration(hintText: 'Uusi numero'),
+                                                                        ),
+                                                                        actions: [
+                                                                          TextButton(
+                                                                            child:
+                                                                                Text('Submit'),
+                                                                            onPressed:
+                                                                                () {
+                                                                              setState(() {
+                                                                                unsavedChangesList.add({
+                                                                                  'id': device['id'],
+                                                                                  'current_stock': _controller.text
+                                                                                });
+                                                                              });
+
+                                                                              _controller.clear();
+                                                                              Navigator.pop(context);
+                                                                            },
+                                                                          )
+                                                                        ]));
+                                                          }
+                                                        : null,
+                                                    child: Icon(Icons.edit)),
+                                              ]),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
             Flexible(
               flex: 4,
-              child: Container(color: Colors.orange),
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      getDatabaseInfo();
+                    },
+                    child: Text('Hae tietokanta'),
+                  ),
+                  ElevatedButton(
+                      onPressed: () {
+                        print(unsavedChangesList);
+                      },
+                      child: Text('show text'))
+                ],
+              ),
             ),
           ]),
         ),
