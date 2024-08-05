@@ -89,9 +89,7 @@ class _MainScreen3State extends State<MainScreen3> {
       }
     }
     unsavedChangesList.clear();
-    setState(() {
-      getDatabaseInfo();
-    });
+    getDatabaseInfo();
   }
 
   @override
