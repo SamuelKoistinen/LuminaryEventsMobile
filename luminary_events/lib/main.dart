@@ -73,7 +73,7 @@ class MinimalExample extends StatelessWidget {
   @override
   Widget build(BuildContext context) => PersistentTabView(
         tabs: _tabs(),
-        navBarBuilder: (navBarConfig) => Style1BottomNavBar(
+        navBarBuilder: (navBarConfig) => Style12BottomNavBar(
           navBarConfig: navBarConfig,
         ),
       );
