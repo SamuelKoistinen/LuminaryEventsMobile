@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import "package:flutter/material.dart";
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../utils.dart';
+import 'package:http/http.dart' as http;
+import 'env.dart';
 
 //     ⢰⣶⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⣶⢰⠀
 //   ⠀  ⣿⣿⣿⣷⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⣤⣶⣾⣿⣿⣿⠀
@@ -35,10 +39,8 @@ class CalendarSivu extends StatefulWidget {
 }
 
 class _EventCalendarScreenState extends State<CalendarSivu> {
-  String _enteredText = '';
   late final ValueNotifier<List<Event>> _selectedEvents;
   CalendarFormat _calendarFormat = CalendarFormat.month;
-  Map<DateTime, List<Event>> events = {};
   RangeSelectionMode _rangeSelectionMode = RangeSelectionMode
       .toggledOff; // Can be toggled on/off by longpressing a date
   DateTime _focusedDay = DateTime.now();
@@ -67,7 +69,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
 
 //*GET EVENTS PER DAY
   List<Event> _getEventsForDay(DateTime day) {
-    return events[day] ?? [];
+    return kEvents[day] ?? [];
   }
 
 //*GET EVENT RANGE
@@ -110,6 +112,43 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
     }
   }
 
+  final _customerController = TextEditingController();
+  final _orderStartController = TextEditingController();
+  final _orderLengthController = TextEditingController();
+  final _orderEndController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _dueDateController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _contentController = TextEditingController();
+  void clearController() {
+    _customerController.clear();
+    _orderStartController.clear();
+    _orderEndController.clear();
+    _orderLengthController.clear();
+    _priceController.clear();
+    _dueDateController.clear();
+    _phoneController.clear();
+    _emailController.clear();
+    _contentController.clear();
+  }
+
+  // Function to DELETE order on db
+  deleteEvent(int id) async {
+    try {
+      var response =
+          await http.delete(Uri.parse('${Env.baseurl}${Env.apikey}/$id'));
+      if (response.statusCode == 200) {
+        setState(() {
+          _selectedEvents.value.clear();
+          _getEventsForDay;
+        });
+      }
+    } catch (e) {
+      print('Exception: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     fetchData();
@@ -142,6 +181,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                         color: Theme.of(context).colorScheme.tertiaryContainer),
                     decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.onInverseSurface)),
+                locale: 'fi_FI',
                 firstDay: kFirstDay,
                 lastDay: kLastDay,
                 focusedDay: _focusedDay,
@@ -218,12 +258,11 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.all(8.0),
-                                                  child: Text.rich(
-                                                      TextSpan(children: [
-                                                    TextSpan(
-                                                      text: e.customerName,
-                                                    ),
-                                                  ])),
+                                                  child: Column(children: [
+                                                    Text(
+                                                        'Kesto: ${e.orderLengthDays} päivää'),
+                                                    Text('tunniste: ${e.id}'),
+                                                  ]),
                                                 )
                                               ])),
                                             ],
@@ -239,10 +278,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                         children: [
                                           textBtn(context, 'Muokkaa', () {}),
                                           textBtn(context, 'Poista', () {
-                                            setState(() {
-                                              _selectedEvents.value.clear();
-                                              _getEventsForDay;
-                                            });
+                                            deleteEvent(e.id);
                                           }),
                                         ],
                                       ),
@@ -296,31 +332,38 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
       title: const Text('Uusi tapahtuma'),
       content: Padding(
         padding: const EdgeInsets.all(8),
-        child: TextField(
-          controller: _textFieldController,
-          onChanged: (value) {
-            setState(() {
-              _enteredText = value; // update the entered text
-            });
-          },
+        child: Column(
+          children: [
+            TextField(
+              controller: _customerController,
+              decoration: const InputDecoration(helperText: 'Asiakkaan nimi'),
+            ),
+            TextField(
+              controller: _phoneController,
+              decoration: const InputDecoration(helperText: 'Puhelin'),
+            ),
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(helperText: 'Email'),
+            ),
+            TextField(
+              controller: _orderLengthController,
+              decoration: const InputDecoration(helperText: 'Tilauksen kesto'),
+            ),
+          ],
         ),
       ),
       actions: [
         ElevatedButton(
             onPressed: () {
               _addEvent(_selectedDay ?? DateTime.now());
-              _clearTextField();
+              _selectedEvents.value = _getEventsForDay(_selectedDay!);
+              clearController();
               context.pop();
             },
-            child: const Text('Lähetä'))
+            child: const Text('Lisää Tapahtuma'))
       ],
     );
-  }
-
-  void _deleteEvent(DateTime day, Event event) {
-    setState(() {
-      kEvents[day]?.remove(event);
-    });
   }
 
   void _clearTextField() {
@@ -330,21 +373,25 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
   void _addEvent(DateTime selectedDate) {
     if (kEvents.containsKey(selectedDate)) {
       kEvents[selectedDate]!.add(Event(
-          customerName: '',
-          title: '',
-          orderStartDate: '',
-          orderLengthDays: 0,
-          orderEndDate: '',
-          contents: []));
+          id: 1, // PLACEHOLDER
+          customerName: _customerController.text,
+          title: _customerController.text,
+          orderStartDate: _orderStartController.text,
+          orderLengthDays: int.parse(_orderLengthController.text),
+          orderEndDate: _orderEndController.text,
+          contents:
+              json.decode(_contentController.text).cast<String>().toList()));
     } else {
       kEvents[selectedDate] = [
         Event(
-            customerName: '',
-            title: '',
-            orderStartDate: '',
-            orderLengthDays: 0,
-            orderEndDate: '',
-            contents: [])
+            id: 1, // PLACEHOLDER
+            customerName: _customerController.text,
+            title: _customerController.text,
+            orderStartDate: _orderStartController.text,
+            orderLengthDays: int.parse(_orderLengthController.text),
+            orderEndDate: _orderEndController.text,
+            contents:
+                json.decode(_contentController.text).cast<String>().toList())
       ];
     }
 

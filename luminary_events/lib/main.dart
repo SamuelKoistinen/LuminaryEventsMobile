@@ -1,3 +1,4 @@
+import "package:intl/date_symbol_data_local.dart";
 import "package:luminary_events/interactive_example.dart";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
@@ -15,7 +16,8 @@ void main() {
   );
   // make flutter draw behind navigation bar
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  runApp(const PersistenBottomNavBarDemo());
+  initializeDateFormatting()
+      .then((_) => runApp(const PersistenBottomNavBarDemo()));
 }
 
 class PersistenBottomNavBarDemo extends StatelessWidget {

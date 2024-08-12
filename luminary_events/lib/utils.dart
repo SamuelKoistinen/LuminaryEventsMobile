@@ -1,26 +1,44 @@
 import 'dart:convert';
 import 'dart:collection';
+import 'dart:developer';
+import 'dart:ffi';
 import 'package:luminary_events/CalendarSivu.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:table_calendar/table_calendar.dart';
 import 'env.dart';
 
-/// Example event class.
+/// Calendar event class.
 class Event {
+  final int id;
+//  final Double price;
   final String title;
   final String orderStartDate;
   final int orderLengthDays;
   final String orderEndDate;
+//  final String orderDue;
   final String customerName;
+//  final String customerPhone;
+//  final String customerEmail;
+//  final String orderStatus;
+//  final Bool paymentResolved;
+//  final String message;
   final List<String> contents;
 
   const Event({
+    required this.id,
+//    required this.price,
     required this.title,
     required this.orderStartDate,
     required this.orderLengthDays,
     required this.orderEndDate,
+//    required this.orderDue,
     required this.customerName,
+//    required this.customerPhone,
+//    required this.customerEmail,
+//    required this.orderStatus,
+//    required this.paymentResolved,
+//    required this.message,
     required this.contents,
   });
 
@@ -28,13 +46,12 @@ class Event {
   String toString() => title;
 }
 
-// Example events map
+// Mapping events to the calendar
 final kEvents = LinkedHashMap<DateTime, List<Event>>(
   equals: isSameDay,
   hashCode: getHashCode,
 );
 
-// Helper functions to manage events
 int getHashCode(DateTime key) {
   return key.day * 1000000 + key.month * 10000 + key.year;
 }
@@ -57,6 +74,7 @@ Future<Map<String, dynamic>> fetchMapData(DateTime selectedDay) async {
 
     if (response.statusCode == 200) {
       Map<String, dynamic> data = json.decode(response.body);
+      log('data: $data');
       return data;
     } else {
       throw 'Failed to fetch data: ${response.statusCode}';
@@ -72,8 +90,10 @@ Future<void> fetchData() async {
     var response = await http.get(Uri.parse('${Env.baseurl}${Env.apikey}'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
+      log('data $data');
       kEvents.clear();
       for (var item in data) {
+        int eventId = item['id'];
         String? orderStartDate = item['order_start_date'];
         int? orderLengthDays = item['order_length_days'];
         String? orderEndDate = item['order_end_date'];
@@ -98,12 +118,12 @@ Future<void> fetchData() async {
             orderEndDate != null &&
             orderLengthDays != null &&
             customerName != null) {
-          DateTime startDate =
-              DateTime.parse(orderStartDate.replaceAll('T', ' ').split('.')[0]);
+          DateTime startDate = DateTime.parse(orderStartDate).toLocal();
           DateTime endDate = startDate.add(Duration(days: orderLengthDays));
 
-          String eventTitle = 'Order for $customerName';
+          String eventTitle = 'Tilauksen Tekijä: $customerName';
           Event event = Event(
+            id: eventId,
             title: eventTitle,
             orderStartDate: orderStartDate,
             orderLengthDays: orderLengthDays,
@@ -149,6 +169,26 @@ void retrieveEventsForNext7Days() {
         }
       }
     }
+  }
+}
+
+// Function to POST new order to db
+Future<void> newData() async {
+  try {
+    var response = await http.post(Uri.parse('${Env.baseurl}${Env.apikey}'));
+    if (response.statusCode == 200) {}
+  } catch (e) {
+    print('Exception: $e');
+  }
+}
+
+// Function to PUT order on db
+Future<void> upData() async {
+  try {
+    var response = await http.put(Uri.parse('${Env.baseurl}${Env.apikey}'));
+    if (response.statusCode == 200) {}
+  } catch (e) {
+    print('Exception: $e');
   }
 }
 
