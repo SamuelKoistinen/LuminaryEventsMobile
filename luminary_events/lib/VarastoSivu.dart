@@ -95,20 +95,24 @@ class _MainScreen3State extends State<MainScreen3> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text("Varasto")),
-        backgroundColor: Colors.deepOrangeAccent,
         body: Center(
           child: Column(children: [
             Flexible(
               flex: 1,
               child: Container(
-                color: Colors.cyan,
+                decoration: BoxDecoration(
+                    border: Border(
+                        bottom:
+                            BorderSide(width: 3, color: Color(0xFF201C24)))),
                 child: Row(children: [
                   Flexible(
                     flex: 3,
                     child: Container(
                         margin: const EdgeInsets.fromLTRB(10, 0, 0, 0),
                         child: Row(children: [
-                          Text('Edit mode', style: TextStyle(fontSize: 20)),
+                          Text('Edit mode',
+                              style:
+                                  TextStyle(fontSize: 20, color: Colors.white)),
                           Switch(
                               value: editModeSwitch,
                               onChanged: (value) {
@@ -128,7 +132,6 @@ class _MainScreen3State extends State<MainScreen3> {
                   Flexible(
                     flex: 1,
                     child: Container(
-                        color: Colors.green,
                         child: Row(
                             children: editModeSwitch
                                 ? [
@@ -232,7 +235,6 @@ class _MainScreen3State extends State<MainScreen3> {
             Flexible(
               flex: 10,
               child: Container(
-                color: Colors.indigo,
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
@@ -240,32 +242,37 @@ class _MainScreen3State extends State<MainScreen3> {
                         Card(
                           child: Container(
                             child: ExpandableTheme(
-                              data: ExpandableThemeData(hasIcon: false),
+                              data: ExpandableThemeData(
+                                  hasIcon: true, iconColor: Colors.white),
                               child: ExpandablePanel(
-                                header: Text(category['name']),
-                                collapsed: Container(
-                                  child: Text('collapsed'),
+                                header: Container(
+                                  margin:
+                                      const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(category['name'],
+                                          style: TextStyle(fontSize: 25))
+                                    ],
+                                  ),
                                 ),
+                                collapsed: Container(),
                                 expanded: Column(
                                   children: [
                                     for (var device in category['devices'])
                                       Card(
                                         child: Container(
-                                          child: ExpandableTheme(
-                                            data: ExpandableThemeData(
-                                                hasIcon: false),
-                                            child: ExpandablePanel(
-                                              header: Text(device['name']),
-                                              collapsed: Container(
-                                                child: Text('collapsed'),
-                                              ),
-                                              expanded: Row(children: [
+                                          margin:
+                                              EdgeInsets.fromLTRB(10, 0, 10, 0),
+                                          child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
                                                 Column(
                                                   children: [
-                                                    Text('Type: ' +
-                                                        device['type']),
-                                                    Text('Description: ' +
-                                                        device['description']),
+                                                    Text(device['name']),
                                                     Text('Stock: ' +
                                                         device['current_stock']
                                                             .toString() +
@@ -316,8 +323,6 @@ class _MainScreen3State extends State<MainScreen3> {
                                                         : null,
                                                     child: Icon(Icons.edit)),
                                               ]),
-                                            ),
-                                          ),
                                         ),
                                       ),
                                   ],

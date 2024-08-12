@@ -24,6 +24,8 @@ class PersistenBottomNavBarDemo extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
         title: "Persistent Bottom Navigation Bar Demo",
+        themeMode: ThemeMode.dark,
+        darkTheme: ThemeData(brightness: Brightness.dark),
         home: Builder(
           builder: (context) => Center(
             child: Column(
