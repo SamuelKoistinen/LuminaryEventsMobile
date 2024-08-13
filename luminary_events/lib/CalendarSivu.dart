@@ -179,6 +179,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(),
                         color: Theme.of(context).colorScheme.tertiaryContainer),
+                    formatButtonVisible: false,
                     decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.onInverseSurface)),
                 locale: 'fi_FI',
