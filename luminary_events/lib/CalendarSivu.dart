@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import "package:flutter/material.dart";
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../utils.dart';
+import 'package:http/http.dart' as http;
+import 'env.dart';
 
 //     ⢰⣶⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⣶⢰⠀
 //   ⠀  ⣿⣿⣿⣷⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⣤⣶⣾⣿⣿⣿⠀
@@ -37,7 +41,6 @@ class CalendarSivu extends StatefulWidget {
 class _EventCalendarScreenState extends State<CalendarSivu> {
   late final ValueNotifier<List<Event>> _selectedEvents;
   CalendarFormat _calendarFormat = CalendarFormat.month;
-  Map<DateTime, List<Event>> events = {};
   RangeSelectionMode _rangeSelectionMode = RangeSelectionMode
       .toggledOff; // Can be toggled on/off by longpressing a date
   DateTime _focusedDay = DateTime.now();
@@ -45,24 +48,28 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
   DateTime? _rangeStart;
   DateTime? _rangeEnd;
 
+  //This is the controller used to edit the new events text field
+
+  final TextEditingController _textFieldController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
 
     _selectedDay = _focusedDay;
     _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
-    loadPreviousEvents();
   }
 
   @override
   void dispose() {
+    _textFieldController.dispose();
     _selectedEvents.dispose();
     super.dispose();
   }
 
 //*GET EVENTS PER DAY
   List<Event> _getEventsForDay(DateTime day) {
-    return events[day] ?? [];
+    return kEvents[day] ?? [];
   }
 
 //*GET EVENT RANGE
@@ -105,15 +112,46 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
     }
   }
 
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
+  final _customerController = TextEditingController();
+  final _orderStartController = TextEditingController();
+  final _orderLengthController = TextEditingController();
+  final _orderEndController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _dueDateController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _contentController = TextEditingController();
   void clearController() {
-    _titleController.clear();
-    _descriptionController.clear();
+    _customerController.clear();
+    _orderStartController.clear();
+    _orderEndController.clear();
+    _orderLengthController.clear();
+    _priceController.clear();
+    _dueDateController.clear();
+    _phoneController.clear();
+    _emailController.clear();
+    _contentController.clear();
+  }
+
+  // Function to DELETE order on db
+  deleteEvent(int id) async {
+    try {
+      var response =
+          await http.delete(Uri.parse('${Env.baseurl}${Env.apikey}/$id'));
+      if (response.statusCode == 200) {
+        setState(() {
+          _selectedEvents.value.clear();
+          _getEventsForDay;
+        });
+      }
+    } catch (e) {
+      print('Exception: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    fetchData();
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(title: const Text("Tapahtumakalenteri")),
@@ -135,16 +173,18 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                   ),
                 ),
               ),
-              TableCalendar(
+              TableCalendar<Event>(
                 headerStyle: HeaderStyle(
                     formatButtonDecoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(),
                         color: Theme.of(context).colorScheme.tertiaryContainer),
+                    formatButtonVisible: false,
                     decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.onInverseSurface)),
-                firstDay: DateTime.utc(2000, 12, 31),
-                lastDay: DateTime.utc(2030, 01, 01),
+                locale: 'fi_FI',
+                firstDay: kFirstDay,
+                lastDay: kLastDay,
                 focusedDay: _focusedDay,
                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                 rangeStartDay: _rangeStart,
@@ -219,12 +259,11 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.all(8.0),
-                                                  child: Text.rich(
-                                                      TextSpan(children: [
-                                                    TextSpan(
-                                                      text: e.description,
-                                                    ),
-                                                  ])),
+                                                  child: Column(children: [
+                                                    Text(
+                                                        'Kesto: ${e.orderLengthDays} päivää'),
+                                                    Text('tunniste: ${e.id}'),
+                                                  ]),
                                                 )
                                               ])),
                                             ],
@@ -240,10 +279,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                         children: [
                                           textBtn(context, 'Muokkaa', () {}),
                                           textBtn(context, 'Poista', () {
-                                            setState(() {
-                                              _selectedEvents.value.clear();
-                                              _getEventsForDay;
-                                            });
+                                            deleteEvent(e.id);
                                           }),
                                         ],
                                       ),
@@ -300,12 +336,20 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
         child: Column(
           children: [
             TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(helperText: 'Nimi'),
+              controller: _customerController,
+              decoration: const InputDecoration(helperText: 'Asiakkaan nimi'),
             ),
             TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(helperText: 'Kuvaus'),
+              controller: _phoneController,
+              decoration: const InputDecoration(helperText: 'Puhelin'),
+            ),
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(helperText: 'Email'),
+            ),
+            TextField(
+              controller: _orderLengthController,
+              decoration: const InputDecoration(helperText: 'Tilauksen kesto'),
             ),
           ],
         ),
@@ -313,27 +357,45 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
       actions: [
         ElevatedButton(
             onPressed: () {
-              events.addAll({
-                _selectedDay!: [
-                  ..._selectedEvents.value,
-                  Event(
-                      title: _titleController.text,
-                      description: _descriptionController.text)
-                ]
-              });
+              _addEvent(_selectedDay ?? DateTime.now());
               _selectedEvents.value = _getEventsForDay(_selectedDay!);
               clearController();
               context.pop();
             },
-            child: const Text('Lähetä'))
+            child: const Text('Lisää Tapahtuma'))
       ],
     );
   }
 
-  void loadPreviousEvents() {
-    events = {
-      _selectedDay!: [const Event(title: '', description: '')],
-      _selectedDay!: [const Event(title: '', description: '')]
-    };
+  void _clearTextField() {
+    _textFieldController.clear();
+  }
+
+  void _addEvent(DateTime selectedDate) {
+    if (kEvents.containsKey(selectedDate)) {
+      kEvents[selectedDate]!.add(Event(
+          id: 1, // PLACEHOLDER
+          customerName: _customerController.text,
+          title: _customerController.text,
+          orderStartDate: _orderStartController.text,
+          orderLengthDays: int.parse(_orderLengthController.text),
+          orderEndDate: _orderEndController.text,
+          contents:
+              json.decode(_contentController.text).cast<String>().toList()));
+    } else {
+      kEvents[selectedDate] = [
+        Event(
+            id: 1, // PLACEHOLDER
+            customerName: _customerController.text,
+            title: _customerController.text,
+            orderStartDate: _orderStartController.text,
+            orderLengthDays: int.parse(_orderLengthController.text),
+            orderEndDate: _orderEndController.text,
+            contents:
+                json.decode(_contentController.text).cast<String>().toList())
+      ];
+    }
+
+    setState(() {});
   }
 }

@@ -22,7 +22,7 @@ class _InteractiveExampleState extends State<InteractiveExample> {
           item: ItemConfig(
             icon: const Icon(Icons.calendar_month_outlined),
             title: "Kalenteri",
-            activeForegroundColor: Colors.teal,
+            activeForegroundColor: Color.fromARGB(255, 255, 147, 255),
             inactiveForegroundColor: Colors.grey,
           ),
         ),
@@ -31,7 +31,7 @@ class _InteractiveExampleState extends State<InteractiveExample> {
           item: ItemConfig(
             icon: const Icon(Icons.home),
             title: "Etusivu",
-            activeForegroundColor: Colors.blue,
+            activeForegroundColor: Color.fromARGB(255, 76, 198, 255),
             inactiveForegroundColor: Colors.grey,
           ),
         ),
@@ -40,7 +40,7 @@ class _InteractiveExampleState extends State<InteractiveExample> {
           item: ItemConfig(
             icon: const Icon(Icons.warehouse),
             title: "Varasto",
-            activeForegroundColor: Colors.teal,
+            activeForegroundColor: Color.fromARGB(255, 255, 194, 39),
             inactiveForegroundColor: Colors.grey,
           ),
         ),
@@ -59,22 +59,7 @@ class _InteractiveExampleState extends State<InteractiveExample> {
           const ItemAnimation(),
           const NeumorphicProperties(),
         ),
-        floatingActionButton: FloatingActionButton(
-          heroTag: "btn1",
-          onPressed: () => showDialog(
-            context: context,
-            builder: (context) => Dialog(
-              child: SettingsView(
-                settings: settings,
-                onChanged: (newSettings) => setState(() {
-                  settings = newSettings;
-                }),
-              ),
-            ),
-          ),
-          child: const Icon(Icons.settings),
-        ),
-        backgroundColor: Colors.green,
+        backgroundColor: Color.fromARGB(255, 151, 151, 151),
         margin: settings.margin,
         avoidBottomPadding: settings.avoidBottomPadding,
         handleAndroidBackButtonPress: settings.handleAndroidBackButtonPress,

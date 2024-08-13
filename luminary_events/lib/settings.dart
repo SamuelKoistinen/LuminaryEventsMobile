@@ -16,9 +16,9 @@ class Settings {
   bool handleAndroidBackButtonPress = true;
   bool popAllScreensOnTapOfSelectedTab = true;
   bool avoidBottomPadding = true;
-  Color navBarColor = Colors.white;
+  Color navBarColor = Colors.black;
   NavBarBuilder get navBarBuilder => navBarStyles[navBarStyle]!;
-  String navBarStyle = "Style 1";
+  String navBarStyle = "Style 12";
   EdgeInsets margin = EdgeInsets.zero;
 
   Map<String, NavBarBuilder> navBarStyles = {
