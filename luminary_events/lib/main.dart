@@ -3,8 +3,8 @@ import "package:luminary_events/interactive_example.dart";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart";
-import "VarastoSivu.dart";
-import "HomeSivu.dart";
+import "varasto_sivu.dart";
+import "homesivu.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

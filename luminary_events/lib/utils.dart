@@ -1,9 +1,6 @@
 import 'dart:convert';
 import 'dart:collection';
 import 'dart:developer';
-import 'dart:ffi';
-import 'package:luminary_events/CalendarSivu.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:table_calendar/table_calendar.dart';
 import 'env.dart';
@@ -110,7 +107,7 @@ Future<void> fetchData() async {
           } else {
             // Handle other scenarios, like if contentsData is a single map or other types
             // You can add custom logic here based on your requirements
-            print('Unexpected contents data format: $contentsData');
+            log('Unexpected contents data format: $contentsData');
           }
         }
 
@@ -138,14 +135,14 @@ Future<void> fetchData() async {
             kEvents[date]!.add(event);
           }
         } else {
-          print('One or more fields are null in the JSON data');
+          log('One or more fields are null in the JSON data');
         }
       }
     } else {
-      print('Failed to fetch data: ${response.statusCode}');
+      log('Failed to fetch data: ${response.statusCode}');
     }
   } catch (e) {
-    print('Exception: $e');
+    log('Exception: $e');
   }
 }
 
@@ -156,16 +153,16 @@ void retrieveEventsForNext7Days() {
     final DateTime day = kToday.add(Duration(days: i));
     if (kEvents.containsKey(day)) {
       final eventsForDay = kEvents[day]!;
-      print('Events for $day:');
+      log('Events for $day:');
       for (var event in eventsForDay) {
-        print('- ${event.title}');
-        print('- Order Start Date: ${event.orderStartDate}');
-        print('- Order Length Days: ${event.orderLengthDays}');
-        print('- Order End Date: ${event.orderEndDate}');
-        print('- Customer Name: ${event.customerName}');
-        print('Contents:');
+        log('- ${event.title}');
+        log('- Order Start Date: ${event.orderStartDate}');
+        log('- Order Length Days: ${event.orderLengthDays}');
+        log('- Order End Date: ${event.orderEndDate}');
+        log('- Customer Name: ${event.customerName}');
+        log('Contents:');
         for (var content in event.contents) {
-          print('- Name: $content');
+          log('- Name: $content');
         }
       }
     }
@@ -178,7 +175,7 @@ Future<void> newData() async {
     var response = await http.post(Uri.parse('${Env.baseurl}${Env.apikey}'));
     if (response.statusCode == 200) {}
   } catch (e) {
-    print('Exception: $e');
+    log('Exception: $e');
   }
 }
 
@@ -188,7 +185,7 @@ Future<void> upData() async {
     var response = await http.put(Uri.parse('${Env.baseurl}${Env.apikey}'));
     if (response.statusCode == 200) {}
   } catch (e) {
-    print('Exception: $e');
+    log('Exception: $e');
   }
 }
 

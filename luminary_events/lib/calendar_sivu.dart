@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'dart:developer';
 import "package:flutter/material.dart";
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -145,7 +145,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
         });
       }
     } catch (e) {
-      print('Exception: $e');
+      log('Exception: $e');
     }
   }
 
