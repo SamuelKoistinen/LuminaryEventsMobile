@@ -4,7 +4,7 @@ import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart";
 import "varasto_sivu.dart";
-import "homesivu.dart";
+import "etu_sivu.dart";
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

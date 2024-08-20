@@ -147,26 +147,20 @@ Future<void> fetchData() async {
 }
 
 // Function to retrieve events for the next 7 days
-void retrieveEventsForNext7Days() {
-  final DateTime nextWeek = kToday.add(const Duration(days: 7));
-  for (var i = 0; i < 7; i++) {
-    final DateTime day = kToday.add(Duration(days: i));
+List<Event> retrieveEventsForNext7Days() {
+  final DateTime today = DateTime.now();
+  final List<Event> events = [];
+
+  for (int i = 0; i < 7; i++) {
+    final DateTime day =
+        DateTime(today.year, today.month, today.day + i); // Normalized date
     if (kEvents.containsKey(day)) {
       final eventsForDay = kEvents[day]!;
-      log('Events for $day:');
-      for (var event in eventsForDay) {
-        log('- ${event.title}');
-        log('- Order Start Date: ${event.orderStartDate}');
-        log('- Order Length Days: ${event.orderLengthDays}');
-        log('- Order End Date: ${event.orderEndDate}');
-        log('- Customer Name: ${event.customerName}');
-        log('Contents:');
-        for (var content in event.contents) {
-          log('- Name: $content');
-        }
-      }
+      events.addAll(eventsForDay);
     }
   }
+
+  return events;
 }
 
 // Function to POST new order to db
