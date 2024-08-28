@@ -158,22 +158,25 @@ Future<void> fetchData() async {
             kEvents[date]!.add(event);
           }
         } else {
-          print('One or more fields are null in the JSON data');
+          log('One or more fields are null in the JSON data');
         }
       }
     } else {
-      print('Failed to fetch data: ${response.statusCode}');
+      log('Failed to fetch data: ${response.statusCode}');
     }
   } catch (e) {
-    print('Exception: $e');
+    log('Exception: $e');
   }
 }
 
 // Function to retrieve events for the next 7 days
-void retrieveEventsForNext7Days() {
-  final DateTime nextWeek = kToday.add(const Duration(days: 7));
-  for (var i = 0; i < 7; i++) {
-    final DateTime day = kToday.add(Duration(days: i));
+List<Event> retrieveEventsForNext7Days() {
+  final DateTime today = DateTime.now();
+  final List<Event> events = [];
+
+  for (int i = 0; i < 7; i++) {
+    final DateTime day =
+        DateTime(today.year, today.month, today.day + i); // Normalized date
     if (kEvents.containsKey(day)) {
       final eventsForDay = kEvents[day]!;
       print('Events for $day:');
@@ -186,6 +189,8 @@ void retrieveEventsForNext7Days() {
       }
     }
   }
+
+  return events;
 }
 
 final kToday = DateTime.now();
