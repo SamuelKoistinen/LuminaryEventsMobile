@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:collection';
 import 'dart:developer';
-import 'package:luminary_events/CalendarSivu.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:table_calendar/table_calendar.dart';
 import 'env.dart';
@@ -179,13 +177,13 @@ List<Event> retrieveEventsForNext7Days() {
         DateTime(today.year, today.month, today.day + i); // Normalized date
     if (kEvents.containsKey(day)) {
       final eventsForDay = kEvents[day]!;
-      print('Events for $day:');
+      log('Events for $day:');
       for (var event in eventsForDay) {
-        print('- ${event.title}');
-        print('- Order Start Date: ${event.orderStartDate}');
-        print('- Order Length Days: ${event.orderLengthDays}');
-        print('- Order End Date: ${event.orderEndDate}');
-        print('- Customer Name: ${event.customerName}');
+        log('- ${event.title}');
+        log('- Order Start Date: ${event.orderStartDate}');
+        log('- Order Length Days: ${event.orderLengthDays}');
+        log('- Order End Date: ${event.orderEndDate}');
+        log('- Customer Name: ${event.customerName}');
       }
     }
   }

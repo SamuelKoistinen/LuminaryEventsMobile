@@ -71,12 +71,13 @@ class _MainScreenState extends State<MainScreen> {
               itemBuilder: (BuildContext context, int index) {
                 final event = events[index];
                 return Container(
-                  color: Color.fromARGB(255, 75, 149, 209),
+                  color: const Color.fromARGB(255, 75, 149, 209),
                   child: ListTile(
                     title: Text(event.title),
                     subtitle: Text(
                       'From ${event.orderStartDate} to ${event.orderEndDate}\n'
-                      'Customer: ${event.customerName}',
+                      'Customer: ${event.customerName}\n'
+                      'Message: ${event.message}',
                     ),
                   ),
                 );
