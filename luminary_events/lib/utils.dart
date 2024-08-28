@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:collection';
 import 'dart:developer';
+import 'package:luminary_events/CalendarSivu.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:table_calendar/table_calendar.dart';
 import 'env.dart';
@@ -8,35 +10,35 @@ import 'env.dart';
 /// Calendar event class.
 class Event {
   final int id;
-//  final Double price;
+  final int price;
   final String title;
+  final String orderCreatedAt;
   final String orderStartDate;
   final int orderLengthDays;
   final String orderEndDate;
-//  final String orderDue;
+  final String orderDue;
   final String customerName;
-//  final String customerPhone;
-//  final String customerEmail;
-//  final String orderStatus;
-//  final Bool paymentResolved;
-//  final String message;
-  final List<String> contents;
+  final String customerPhone;
+  final String customerEmail;
+  final String orderStatus;
+  final int paymentResolved;
+  final String message;
 
   const Event({
     required this.id,
-//    required this.price,
+    required this.price,
     required this.title,
+    required this.orderCreatedAt,
     required this.orderStartDate,
     required this.orderLengthDays,
     required this.orderEndDate,
-//    required this.orderDue,
+    required this.orderDue,
     required this.customerName,
-//    required this.customerPhone,
-//    required this.customerEmail,
-//    required this.orderStatus,
-//    required this.paymentResolved,
-//    required this.message,
-    required this.contents,
+    required this.customerPhone,
+    required this.customerEmail,
+    required this.orderStatus,
+    required this.paymentResolved,
+    required this.message,
   });
 
   @override
@@ -71,7 +73,7 @@ Future<Map<String, dynamic>> fetchMapData(DateTime selectedDay) async {
 
     if (response.statusCode == 200) {
       Map<String, dynamic> data = json.decode(response.body);
-      log('data: $data');
+      //log('data: $data');
       return data;
     } else {
       throw 'Failed to fetch data: ${response.statusCode}';
@@ -87,46 +89,67 @@ Future<void> fetchData() async {
     var response = await http.get(Uri.parse('${Env.baseurl}${Env.apikey}'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
-      log('data $data');
+      //log('data $data');
       kEvents.clear();
       for (var item in data) {
         int eventId = item['id'];
+        int? price = item['total_price'];
+        String? orderCreatedAt = item['order_created_at'];
         String? orderStartDate = item['order_start_date'];
         int? orderLengthDays = item['order_length_days'];
         String? orderEndDate = item['order_end_date'];
+        String? orderDue = item['payment_due_date'];
         String? customerName = item['customer_name'];
-        dynamic contentsData = item['contents'];
-        List<String> contents = [];
+        String? customerphone = item['customer_phone_number'];
+        String? customerEmail = item['customer_email'];
+        String? orderStatus = item['order_status'];
+        int? paymentResolved = item['payment_resolved'];
+        String? message = item['message'];
 
-        if (contentsData != null) {
-          if (contentsData is List<dynamic>) {
-            // Handle the case where contentsData is a list
-            contents = contentsData
-                .map((content) => content['name'].toString())
-                .toList();
-          } else {
-            // Handle other scenarios, like if contentsData is a single map or other types
-            // You can add custom logic here based on your requirements
-            log('Unexpected contents data format: $contentsData');
-          }
-        }
+        // if (contentsData != null) {
+        //   if (contentsData is List<dynamic>) {
+        //     // Handle the case where contentsData is a list
+        //     contents = contentsData
+        //         .map((content) => content['name'].toString())
+        //         .toList();
+        //   } else {
+        //     // Handle other scenarios, like if contentsData is a single map or other types
+        //     // You can add custom logic here based on your requirements
+        //     print('Unexpected contents data format: $contentsData');
+        //   }
+        // }
 
-        if (orderStartDate != null &&
+        if (price != null &&
+            orderCreatedAt != null &&
+            orderStartDate != null &&
             orderEndDate != null &&
             orderLengthDays != null &&
-            customerName != null) {
+            orderDue != null &&
+            customerName != null &&
+            customerphone != null &&
+            customerEmail != null &&
+            orderStatus != null &&
+            paymentResolved != null &&
+            message != null) {
           DateTime startDate = DateTime.parse(orderStartDate).toLocal();
-          DateTime endDate = startDate.add(Duration(days: orderLengthDays));
+          DateTime endDate = DateTime.parse(orderEndDate).toLocal();
 
-          String eventTitle = 'Tilauksen Tekijä: $customerName';
+          String eventTitle = customerName;
           Event event = Event(
             id: eventId,
+            price: price,
             title: eventTitle,
-            orderStartDate: orderStartDate,
+            orderCreatedAt: orderCreatedAt,
+            orderStartDate: startDate.toString(),
             orderLengthDays: orderLengthDays,
-            orderEndDate: endDate.toIso8601String(),
+            orderEndDate: endDate.toString(),
             customerName: customerName,
-            contents: contents,
+            customerPhone: customerphone,
+            customerEmail: customerEmail,
+            orderStatus: orderStatus,
+            paymentResolved: paymentResolved,
+            message: message,
+            orderDue: orderDue,
           );
 
           for (int i = 0; i < orderLengthDays; i++) {
@@ -156,31 +179,18 @@ List<Event> retrieveEventsForNext7Days() {
         DateTime(today.year, today.month, today.day + i); // Normalized date
     if (kEvents.containsKey(day)) {
       final eventsForDay = kEvents[day]!;
-      events.addAll(eventsForDay);
+      print('Events for $day:');
+      for (var event in eventsForDay) {
+        print('- ${event.title}');
+        print('- Order Start Date: ${event.orderStartDate}');
+        print('- Order Length Days: ${event.orderLengthDays}');
+        print('- Order End Date: ${event.orderEndDate}');
+        print('- Customer Name: ${event.customerName}');
+      }
     }
   }
 
   return events;
-}
-
-// Function to POST new order to db
-Future<void> newData() async {
-  try {
-    var response = await http.post(Uri.parse('${Env.baseurl}${Env.apikey}'));
-    if (response.statusCode == 200) {}
-  } catch (e) {
-    log('Exception: $e');
-  }
-}
-
-// Function to PUT order on db
-Future<void> upData() async {
-  try {
-    var response = await http.put(Uri.parse('${Env.baseurl}${Env.apikey}'));
-    if (response.statusCode == 200) {}
-  } catch (e) {
-    log('Exception: $e');
-  }
 }
 
 final kToday = DateTime.now();
