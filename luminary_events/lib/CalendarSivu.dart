@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import "package:flutter/material.dart";
 import 'package:go_router/go_router.dart';
@@ -113,28 +114,30 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
   }
 
   final _customerController = TextEditingController();
-  final _orderStartController = TextEditingController();
   final _orderLengthController = TextEditingController();
-  final _orderEndController = TextEditingController();
   final _priceController = TextEditingController();
   final _dueDateController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _contentController = TextEditingController();
+  final _messageController = TextEditingController();
+  final _startDateController = TextEditingController();
+  final _orderStatusController = TextEditingController();
+  final _paymentResolvedController = TextEditingController();
   void clearController() {
     _customerController.clear();
-    _orderStartController.clear();
-    _orderEndController.clear();
     _orderLengthController.clear();
     _priceController.clear();
     _dueDateController.clear();
     _phoneController.clear();
     _emailController.clear();
-    _contentController.clear();
+    _messageController.clear();
+    _startDateController.clear();
+    _orderStatusController.clear();
+    _paymentResolvedController.clear();
   }
 
-  // Function to DELETE order on db
-  deleteEvent(int id) async {
+  // DELETE REQUEST
+  void deleteEvent(int id) async {
     try {
       var response =
           await http.delete(Uri.parse('${Env.baseurl}${Env.apikey}/$id'));
@@ -145,7 +148,98 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
         });
       }
     } catch (e) {
-      print('Exception: $e');
+      log('Exception: $e');
+    }
+  }
+
+  // POST REQUEST
+  void postEvent() async {
+    try {
+      var data = jsonEncode(<String, dynamic>{
+        'total_price': double.parse(_priceController.text),
+        'order_created_at': DateTime.now().toIso8601String().substring(0, 10),
+        'order_start_date': _selectedDay?.toIso8601String().substring(0, 10),
+        'order_length_days': int.parse(_orderLengthController.text),
+        'order_end_date': _selectedDay
+            ?.add(Duration(days: int.parse(_orderLengthController.text) - 1))
+            .toIso8601String()
+            .substring(0, 10),
+        'payment_due_date': DateTime.parse(_dueDateController.text)
+            .toIso8601String()
+            .substring(0, 10),
+        'customer_name': _customerController.text,
+        'customer_phone_number': _phoneController.text,
+        'customer_email': _emailController.text,
+        'order_status': 'received',
+        'payment_resolved': 0,
+        'message': _messageController.text
+      });
+
+      var response = await http.post(Uri.parse('${Env.baseurl}${Env.apikey}'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: data);
+      if (response.statusCode == 201) {
+        log('data: $data');
+        setState(() {
+          _selectedEvents.value.clear();
+          _getEventsForDay;
+        });
+      } else {
+        // If the server returns an error response, throw an exception
+        throw Exception('Code: ${response.statusCode}. Failed to post data');
+      }
+    } catch (e) {
+      log('Exception: $e');
+    }
+  }
+
+// PUT REQUEST
+  void editEvent(int id) async {
+    try {
+      Map<String, dynamic> data = {
+        'total_price': double.tryParse(_priceController.text),
+        'order_start_date': DateTime.tryParse(_startDateController.text)
+            ?.toIso8601String()
+            .substring(0, 10),
+        'order_length_days': int.tryParse(_orderLengthController.text),
+        'order_end_date': DateTime.tryParse(_startDateController.text)
+            ?.add(Duration(days: int.parse(_orderLengthController.text)))
+            .toIso8601String()
+            .substring(0, 10),
+        'payment_due_date': DateTime.tryParse(_dueDateController.text)
+            ?.toIso8601String()
+            .substring(0, 10),
+        'customer_name': _customerController.text,
+        'customer_phone_number': _phoneController.text,
+        'customer_email': _emailController.text,
+        'order_status': 'received',
+        'payment_resolved': int.tryParse(_paymentResolvedController.text),
+        'message': _messageController.text
+      };
+
+      data.removeWhere((key, value) => value == null);
+      String jsonData = jsonEncode(data);
+
+      var response =
+          await http.put(Uri.parse('${Env.baseurl}${Env.apikey}/$id'),
+              headers: <String, String>{
+                'Content-Type': 'application/json; charset=UTF-8',
+              },
+              body: jsonData);
+      if (response.statusCode == 200) {
+        log('data: $jsonData');
+        setState(() {
+          _selectedEvents.value.clear();
+          _getEventsForDay;
+        });
+      } else {
+        // If the server returns an error response, throw an exception
+        throw Exception('Code: ${response.statusCode}. Failed to post data');
+      }
+    } catch (e) {
+      log('Exception: $e');
     }
   }
 
@@ -250,7 +344,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                               SizedBox(
                                                   child: Column(children: [
                                                 Text(
-                                                    maxLines: 1,
+                                                    maxLines: 5,
                                                     style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.w500,
@@ -261,8 +355,16 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                       const EdgeInsets.all(8.0),
                                                   child: Column(children: [
                                                     Text(
-                                                        'Kesto: ${e.orderLengthDays} päivää'),
-                                                    Text('tunniste: ${e.id}'),
+                                                        'id: ${e.id} jätetty: ${e.orderCreatedAt.substring(5, 10)}, Tilanne: ${e.orderStatus}, hinta: ${e.price}'),
+                                                    Text(
+                                                        'Tapahtuma ${e.orderStartDate.substring(5, 10)} - ${e.orderEndDate.substring(5, 10)}, Kesto: ${e.orderLengthDays} pv'),
+                                                    Text(
+                                                        'Maksutilanne: ${e.paymentResolved}, Eräpäivä: ${e.orderDue.substring(5, 10)}'),
+                                                    Text(
+                                                        'Email: ${e.customerEmail}'),
+                                                    Text(
+                                                        'Tele: ${e.customerPhone}'),
+                                                    Text('"${e.message}"'),
                                                   ]),
                                                 )
                                               ])),
@@ -277,9 +379,109 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          textBtn(context, 'Muokkaa', () {}),
+                                          textBtn(context, 'Muokkaa', () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) =>
+                                                  AlertDialog(
+                                                scrollable: true,
+                                                title: Text(
+                                                    'Tapahtuman ${e.id} muokkauslomake.'),
+                                                content: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8),
+                                                  child: Column(
+                                                    children: [
+                                                      TextField(
+                                                        controller:
+                                                            _customerController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'nimi -> ${e.customerName}'),
+                                                      ),
+                                                      TextField(
+                                                        controller:
+                                                            _phoneController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'Puhelin -> ${e.customerPhone}'),
+                                                      ),
+                                                      TextField(
+                                                        controller:
+                                                            _emailController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'Email -> ${e.customerEmail}'),
+                                                      ),
+                                                      TextField(
+                                                        controller:
+                                                            _startDateController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'Alkaa ->  ${e.orderStartDate.substring(0, 10)}'),
+                                                      ),
+                                                      TextField(
+                                                        controller:
+                                                            _orderLengthController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'Kesto -> ${e.orderLengthDays}'),
+                                                      ),
+                                                      TextField(
+                                                        controller:
+                                                            _priceController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'Hinta -> ${e.price}'),
+                                                      ),
+                                                      TextField(
+                                                        controller:
+                                                            _dueDateController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'Maksupäivä  -> ${e.orderDue.substring(0, 10)} '),
+                                                      ),
+                                                      TextField(
+                                                        controller:
+                                                            _orderStatusController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'Tilanne -> ${e.orderStatus}'),
+                                                      ),
+                                                      TextField(
+                                                        controller:
+                                                            _paymentResolvedController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'Maksettu (1/0) -> ${e.paymentResolved}'),
+                                                      ),
+                                                      TextField(
+                                                        controller:
+                                                            _messageController,
+                                                        decoration: InputDecoration(
+                                                            helperText:
+                                                                'Lisätiedot -> ${e.message}'),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      editEvent(e.id);
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child:
+                                                        const Text('Päivitä'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }),
                                           textBtn(context, 'Poista', () {
                                             deleteEvent(e.id);
+                                            _selectedEvents.value =
+                                                _getEventsForDay(_selectedDay!);
                                           }),
                                         ],
                                       ),
@@ -326,7 +528,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
     );
   }
 
-// ALERT DIALOG
+// UUSI TAPAHTUMA LOMAKE
   AlertDialog _dialogWidget(BuildContext context) {
     return AlertDialog.adaptive(
       scrollable: true,
@@ -349,7 +551,22 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
             ),
             TextField(
               controller: _orderLengthController,
-              decoration: const InputDecoration(helperText: 'Tilauksen kesto'),
+              decoration:
+                  const InputDecoration(helperText: 'Kesto (pelkkä numero)'),
+            ),
+            TextField(
+              controller: _priceController,
+              decoration:
+                  const InputDecoration(helperText: 'Hinta (pelkkä numero)'),
+            ),
+            TextField(
+              controller: _dueDateController,
+              decoration:
+                  const InputDecoration(helperText: 'Maksupäivä (YYYY-MM-DD)'),
+            ),
+            TextField(
+              controller: _messageController,
+              decoration: const InputDecoration(helperText: 'Lisätiedot'),
             ),
           ],
         ),
@@ -357,45 +574,13 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
       actions: [
         ElevatedButton(
             onPressed: () {
-              _addEvent(_selectedDay ?? DateTime.now());
+              postEvent();
               _selectedEvents.value = _getEventsForDay(_selectedDay!);
               clearController();
               context.pop();
             },
-            child: const Text('Lisää Tapahtuma'))
+            child: const Text('Tallenna')),
       ],
     );
-  }
-
-  void _clearTextField() {
-    _textFieldController.clear();
-  }
-
-  void _addEvent(DateTime selectedDate) {
-    if (kEvents.containsKey(selectedDate)) {
-      kEvents[selectedDate]!.add(Event(
-          id: 1, // PLACEHOLDER
-          customerName: _customerController.text,
-          title: _customerController.text,
-          orderStartDate: _orderStartController.text,
-          orderLengthDays: int.parse(_orderLengthController.text),
-          orderEndDate: _orderEndController.text,
-          contents:
-              json.decode(_contentController.text).cast<String>().toList()));
-    } else {
-      kEvents[selectedDate] = [
-        Event(
-            id: 1, // PLACEHOLDER
-            customerName: _customerController.text,
-            title: _customerController.text,
-            orderStartDate: _orderStartController.text,
-            orderLengthDays: int.parse(_orderLengthController.text),
-            orderEndDate: _orderEndController.text,
-            contents:
-                json.decode(_contentController.text).cast<String>().toList())
-      ];
-    }
-
-    setState(() {});
   }
 }
