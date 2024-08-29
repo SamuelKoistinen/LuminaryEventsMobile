@@ -73,7 +73,7 @@ class _MainScreenState extends State<MainScreen> {
                 final StartDateToBeFormatted =
                     DateTime.parse(event.orderStartDate);
                 final EndDateToBeFormatted = DateTime.parse(event.orderEndDate);
-                final formatter = DateFormat('dd-MM-yyyy');
+                final formatter = DateFormat.yMMMMd('fi_FI');
                 final StartDate = formatter.format(StartDateToBeFormatted);
                 final EndDate = formatter.format(EndDateToBeFormatted);
                 return Container(
