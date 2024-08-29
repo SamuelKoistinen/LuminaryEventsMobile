@@ -173,17 +173,24 @@ List<Event> retrieveEventsForNext7Days() {
   final List<Event> events = [];
 
   for (int i = 0; i < 7; i++) {
-    final DateTime day =
-        DateTime(today.year, today.month, today.day + i); // Normalized date
-    if (kEvents.containsKey(day)) {
-      final eventsForDay = kEvents[day]!;
-      log('Events for $day:');
+    final DateTime day = DateTime(today.year, today.month, today.day + i);
+    
+    // Normalize the date to ensure it matches the keys in kEvents
+    final DateTime normalizedDay = DateTime(day.year, day.month, day.day);
+
+    if (kEvents.containsKey(normalizedDay)) {
+      final eventsForDay = kEvents[normalizedDay]!;
+      log('Events for $normalizedDay:');
+      
       for (var event in eventsForDay) {
         log('- ${event.title}');
         log('- Order Start Date: ${event.orderStartDate}');
         log('- Order Length Days: ${event.orderLengthDays}');
         log('- Order End Date: ${event.orderEndDate}');
         log('- Customer Name: ${event.customerName}');
+        
+        // Add the event to the list
+        events.add(event);
       }
     }
   }

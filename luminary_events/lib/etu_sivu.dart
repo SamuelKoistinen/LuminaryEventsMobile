@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'utils.dart';
+import 'package:intl/intl.dart';
+
 
 // Entry point of the Flutter application
 void main() {
@@ -59,23 +61,26 @@ class _MainScreenState extends State<MainScreen> {
                 child: Text('Error: ${snapshot.error}')); // Error message
           } else {
             final List<Event> events =
-                retrieveEventsForNext7Days(); // Retrieve events after data fetch
+                retrieveEventsForNext7Days();
             if (events.isEmpty) {
               return const Center(
                   child: Text('No events found.')); // No events message
             }
+            
 
             return ListView.separated(
               padding: const EdgeInsets.only(top: 10),
               itemCount: events.length,
               itemBuilder: (BuildContext context, int index) {
                 final event = events[index];
+                final DateTime startDate = DateFormat('dd-MM-yyyy').parse(event.orderStartDate);
+                final DateTime endDate = DateFormat('dd-MM-yyyy').parse(event.orderEndDate);
                 return Container(
                   color: const Color.fromARGB(255, 75, 149, 209),
                   child: ListTile(
                     title: Text(event.title),
                     subtitle: Text(
-                      'From ${event.orderStartDate} to ${event.orderEndDate}\n'
+                      'From ${startDate} to ${endDate}\n'
                       'Customer: ${event.customerName}\n'
                       'Message: ${event.message}',
                     ),
