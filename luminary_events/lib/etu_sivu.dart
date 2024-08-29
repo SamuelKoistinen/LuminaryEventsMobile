@@ -70,18 +70,18 @@ class _MainScreenState extends State<MainScreen> {
               itemCount: events.length,
               itemBuilder: (BuildContext context, int index) {
                 final event = events[index];
-                final StartDateToBeFormatted =
+                final startDateToBeFormatted =
                     DateTime.parse(event.orderStartDate);
-                final EndDateToBeFormatted = DateTime.parse(event.orderEndDate);
+                final endDateToBeFormatted = DateTime.parse(event.orderEndDate);
                 final formatter = DateFormat.yMMMMd('fi_FI');
-                final StartDate = formatter.format(StartDateToBeFormatted);
-                final EndDate = formatter.format(EndDateToBeFormatted);
+                final startDate = formatter.format(startDateToBeFormatted);
+                final endDate = formatter.format(endDateToBeFormatted);
                 return Container(
                   color: const Color.fromARGB(255, 75, 149, 209),
                   child: ListTile(
                     title: Text(event.title),
                     subtitle: Text(
-                      'From ${StartDate} to ${EndDate}\n'
+                      'From $startDate to $endDate\n'
                       'Customer: ${event.customerName}\n'
                       'Message: ${event.message}',
                     ),
