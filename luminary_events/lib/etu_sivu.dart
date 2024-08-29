@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'utils.dart';
 import 'package:intl/intl.dart';
 
-
 // Entry point of the Flutter application
 void main() {
   runApp(const MyApp());
@@ -60,27 +59,29 @@ class _MainScreenState extends State<MainScreen> {
             return Center(
                 child: Text('Error: ${snapshot.error}')); // Error message
           } else {
-            final List<Event> events =
-                retrieveEventsForNext7Days();
+            final List<Event> events = retrieveEventsForNext7Days();
             if (events.isEmpty) {
               return const Center(
                   child: Text('No events found.')); // No events message
             }
-            
 
             return ListView.separated(
               padding: const EdgeInsets.only(top: 10),
               itemCount: events.length,
               itemBuilder: (BuildContext context, int index) {
                 final event = events[index];
-                final DateTime startDate = DateFormat('dd-MM-yyyy').parse(event.orderStartDate);
-                final DateTime endDate = DateFormat('dd-MM-yyyy').parse(event.orderEndDate);
+                final StartDateToBeFormatted =
+                    DateTime.parse(event.orderStartDate);
+                final EndDateToBeFormatted = DateTime.parse(event.orderEndDate);
+                final formatter = DateFormat('dd-MM-yyyy');
+                final StartDate = formatter.format(StartDateToBeFormatted);
+                final EndDate = formatter.format(EndDateToBeFormatted);
                 return Container(
                   color: const Color.fromARGB(255, 75, 149, 209),
                   child: ListTile(
                     title: Text(event.title),
                     subtitle: Text(
-                      'From ${startDate} to ${endDate}\n'
+                      'From ${StartDate} to ${EndDate}\n'
                       'Customer: ${event.customerName}\n'
                       'Message: ${event.message}',
                     ),
