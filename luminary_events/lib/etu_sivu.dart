@@ -83,7 +83,9 @@ class _MainScreenState extends State<MainScreen> {
                     subtitle: Text(
                       'From $startDate to $endDate\n'
                       'Customer: ${event.customerName}\n'
-                      'Message: ${event.message}',
+                      'Message: ${event.message}\n'
+                      'Contact Email: ${event.customerEmail}\n'
+                      'Customer Phone: ${event.customerPhone}',
                     ),
                   ),
                 );
