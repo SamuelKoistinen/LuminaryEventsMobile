@@ -45,7 +45,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Etusivu"),
+        title: const Text("Tapahtumat viikon aikana"),
         centerTitle: true,
       ),
       backgroundColor: const Color.fromARGB(255, 34, 32, 33),
