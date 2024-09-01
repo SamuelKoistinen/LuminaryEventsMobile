@@ -42,6 +42,7 @@ dependencies:
   envied: ^0.5.4+1
   expandable: ^5.0.1
   http: ^1.2.2
+  mobile_scanner: ^5.2.1
 
 dev_dependencies:
   flutter_test:

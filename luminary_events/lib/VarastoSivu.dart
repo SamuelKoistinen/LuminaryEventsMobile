@@ -1,8 +1,11 @@
 import 'dart:convert';
 
 import 'package:expandable/expandable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import "package:flutter/material.dart";
+import 'package:intl/intl.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'env.dart';
 
 /*
@@ -24,12 +27,15 @@ class MainScreen3 extends StatefulWidget {
 }
 
 class _MainScreen3State extends State<MainScreen3> {
-  bool editModeSwitch = false;
   bool unsavedChanges = false;
 
   final TextEditingController _controller = TextEditingController();
 
   List unsavedChangesList = [];
+  List changedSubIDs = [];
+  int stockChange = 0;
+
+  bool qrCodeProcessed = false;
 
   @override
   void dispose() {
@@ -79,6 +85,7 @@ class _MainScreen3State extends State<MainScreen3> {
         },
         body: jsonEncode({
           'current_stock': device['current_stock'],
+          'sub_ids': device['sub_ids'],
         }),
       );
       if (response.statusCode == 201) {
@@ -90,6 +97,82 @@ class _MainScreen3State extends State<MainScreen3> {
     }
     unsavedChangesList.clear();
     getDatabaseInfo();
+  }
+
+  setupSubIDs(String? dbSubIDs) {
+    if (dbSubIDs == null) {
+      return;
+    }
+    changedSubIDs.clear();
+    stockChange = 0;
+
+    dbSubIDs.split(' ').forEach((element) {
+      if (element != '') changedSubIDs.add(element);
+    });
+  }
+
+  processBarCode(String? barcode) async {
+    qrCodeProcessed = true;
+
+    print('PROCESSING BARCODE');
+
+    if (barcode == null) {
+      return;
+    }
+    var barcodeSplit = barcode.split('_');
+    if (barcodeSplit.length != 2) {
+      return;
+    }
+    var device;
+    final response = await http
+        .get(Uri.parse("https://mekelektro.com/devices/${barcodeSplit[0]}"));
+    if (response.statusCode == 200) {
+      device = json.decode(response.body);
+    } else {
+      throw Exception('Failed to load database info');
+    }
+
+    print(device);
+
+    setupSubIDs(device['sub_ids']);
+
+    changedSubIDs.contains(barcode)
+        ? {
+            changedSubIDs.removeWhere((element) => element == barcode),
+            stockChange = stockChange + 1,
+          }
+        : {
+            changedSubIDs.add(barcode),
+            stockChange = stockChange - 1,
+          };
+
+    String preppedSubIDs = '';
+    for (var subID in changedSubIDs) {
+      if (preppedSubIDs.isNotEmpty) {
+        preppedSubIDs = '$preppedSubIDs ';
+      }
+      preppedSubIDs = preppedSubIDs + subID;
+    }
+
+    if (preppedSubIDs.isEmpty) {
+      preppedSubIDs = "empty";
+    }
+
+    setState(() {
+      for (var unsavedChange in unsavedChangesList) {
+        if (unsavedChange['id'] == device['id']) {
+          unsavedChange['current_stock'] += stockChange;
+          unsavedChange['sub_ids'] = preppedSubIDs;
+        }
+      }
+      unsavedChangesList.add({
+        'id': device['id'],
+        'current_stock': device['current_stock'] + stockChange,
+        'sub_ids': preppedSubIDs
+      });
+
+      print(unsavedChangesList);
+    });
   }
 
   @override
@@ -106,21 +189,52 @@ class _MainScreen3State extends State<MainScreen3> {
                             BorderSide(width: 3, color: Color(0xFF201C24)))),
                 child: Row(children: [
                   Flexible(
-                    flex: 3,
+                    flex: 2,
                     child: Container(
                         margin: const EdgeInsets.fromLTRB(10, 0, 0, 0),
                         child: Row(children: [
-                          Text('Edit mode',
-                              style:
-                                  TextStyle(fontSize: 20, color: Colors.white)),
-                          Switch(
-                              value: editModeSwitch,
-                              onChanged: (value) {
-                                setState(() {
-                                  editModeSwitch = value;
-                                  unsavedChanges = value;
-                                });
-                              }),
+                          TextButton.icon(
+                            onPressed: () {
+                              qrCodeProcessed = false;
+                              showDialog(
+                                  context: context,
+                                  builder: (context) => SimpleDialog(
+                                        title: null,
+                                        contentPadding:
+                                            const EdgeInsets.all(20.0),
+                                        children: [
+                                          Container(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width -
+                                                  10,
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height -
+                                                  200,
+                                              child: MobileScanner(
+                                                  controller:
+                                                      MobileScannerController(
+                                                    detectionSpeed:
+                                                        DetectionSpeed
+                                                            .noDuplicates,
+                                                  ),
+                                                  onDetect: (capture) {
+                                                    if (qrCodeProcessed) {
+                                                      Navigator.pop(context);
+                                                      return;
+                                                    }
+                                                    ;
+                                                    processBarCode(capture
+                                                        .barcodes[0].rawValue);
+                                                    Navigator.pop(context);
+                                                  })),
+                                        ],
+                                      ));
+                            },
+                            icon: Icon(Icons.qr_code_scanner),
+                            label: Text('Skannaa QR'),
+                          ),
                           unsavedChangesList.isNotEmpty
                               ? Text('Unsaved changes',
                                   style: TextStyle(
@@ -133,101 +247,88 @@ class _MainScreen3State extends State<MainScreen3> {
                     flex: 1,
                     child: Container(
                         child: Row(
-                            children: editModeSwitch
-                                ? [
-                                    IconButton(
-                                        onPressed: unsavedChangesList.isNotEmpty
-                                            ? () {
-                                                showDialog(
-                                                    context: context,
-                                                    builder: (context) =>
-                                                        SimpleDialog(
-                                                            title: Text(
-                                                                'Varmistus'),
-                                                            contentPadding:
-                                                                const EdgeInsets
-                                                                    .all(20.0),
-                                                            children: [
-                                                              Text(
-                                                                  'Haluatko varmasti hylätä muutokset?'),
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .end,
-                                                                children: [
-                                                                  ElevatedButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child: Text(
-                                                                          'Peruuta')),
-                                                                  ElevatedButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        setState(
-                                                                            () {
-                                                                          unsavedChangesList
-                                                                              .clear();
-                                                                        });
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child: Text(
-                                                                          'Hylkää muutokset')),
-                                                                ],
-                                                              ),
-                                                            ]));
-                                              }
-                                            : null,
-                                        icon: Icon(
-                                            Icons.settings_backup_restore)),
-                                    IconButton(
-                                        onPressed: unsavedChangesList.isNotEmpty
-                                            ? () {
-                                                showDialog(
-                                                    context: context,
-                                                    builder: (context) =>
-                                                        SimpleDialog(
-                                                            title: Text(
-                                                                'Varmistus'),
-                                                            contentPadding:
-                                                                const EdgeInsets
-                                                                    .all(20.0),
-                                                            children: [
-                                                              Text(
-                                                                  'Haluatko varmasti tallentaa muutokset?'),
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .end,
-                                                                children: [
-                                                                  ElevatedButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child: Text(
-                                                                          'Peruuta')),
-                                                                  ElevatedButton(
-                                                                      onPressed:
-                                                                          () {
-                                                                        sendUpdatedData();
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child: Text(
-                                                                          'Tallenna muutokset')),
-                                                                ],
-                                                              ),
-                                                            ]));
-                                              }
-                                            : null,
-                                        icon: Icon(Icons.save)),
-                                  ]
-                                : [])),
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                          IconButton(
+                              onPressed: unsavedChangesList.isNotEmpty
+                                  ? () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (context) => SimpleDialog(
+                                                  title: Text('Varmistus'),
+                                                  contentPadding:
+                                                      const EdgeInsets.all(
+                                                          20.0),
+                                                  children: [
+                                                    Text(
+                                                        'Haluatko varmasti hylätä muutokset?'),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.end,
+                                                      children: [
+                                                        ElevatedButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: Text(
+                                                                'Peruuta')),
+                                                        ElevatedButton(
+                                                            onPressed: () {
+                                                              setState(() {
+                                                                unsavedChangesList
+                                                                    .clear();
+                                                              });
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: Text(
+                                                                'Hylkää muutokset')),
+                                                      ],
+                                                    ),
+                                                  ]));
+                                    }
+                                  : null,
+                              icon: Icon(Icons.settings_backup_restore)),
+                          IconButton(
+                              onPressed: unsavedChangesList.isNotEmpty
+                                  ? () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (context) => SimpleDialog(
+                                                  title: Text('Varmistus'),
+                                                  contentPadding:
+                                                      const EdgeInsets.all(
+                                                          20.0),
+                                                  children: [
+                                                    Text(
+                                                        'Haluatko varmasti tallentaa muutokset?'),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.end,
+                                                      children: [
+                                                        ElevatedButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: Text(
+                                                                'Peruuta')),
+                                                        ElevatedButton(
+                                                            onPressed: () {
+                                                              sendUpdatedData();
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: Text(
+                                                                'Tallenna muutokset')),
+                                                      ],
+                                                    ),
+                                                  ]));
+                                    }
+                                  : null,
+                              icon: Icon(Icons.save)),
+                        ])),
                   ),
                 ]),
               ),
@@ -252,7 +353,9 @@ class _MainScreen3State extends State<MainScreen3> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(category['name'],
+                                      Text(
+                                          toBeginningOfSentenceCase(
+                                              category['name']),
                                           style: TextStyle(fontSize: 25))
                                     ],
                                   ),
@@ -282,45 +385,155 @@ class _MainScreen3State extends State<MainScreen3> {
                                                   ],
                                                 ),
                                                 ElevatedButton(
-                                                    onPressed: editModeSwitch
-                                                        ? () {
-                                                            showDialog(
-                                                                context:
-                                                                    context,
-                                                                builder: (context) =>
-                                                                    AlertDialog(
-                                                                        title: Text(
-                                                                            'Muokkaa laitetta'),
-                                                                        contentPadding: const EdgeInsets
-                                                                            .all(
-                                                                            20.0),
-                                                                        content:
-                                                                            TextField(
-                                                                          controller:
-                                                                              _controller,
-                                                                          decoration:
-                                                                              InputDecoration(hintText: 'Uusi numero'),
-                                                                        ),
-                                                                        actions: [
-                                                                          TextButton(
-                                                                            child:
-                                                                                Text('Submit'),
-                                                                            onPressed:
-                                                                                () {
-                                                                              setState(() {
-                                                                                unsavedChangesList.add({
-                                                                                  'id': device['id'],
-                                                                                  'current_stock': _controller.text
-                                                                                });
-                                                                              });
+                                                    onPressed: () {
+                                                      if (device['sub_ids'] !=
+                                                          null) {
+                                                        setupSubIDs(
+                                                            device['sub_ids']);
+                                                      } else {
+                                                        setupSubIDs('');
+                                                      }
 
-                                                                              _controller.clear();
-                                                                              Navigator.pop(context);
-                                                                            },
-                                                                          )
-                                                                        ]));
-                                                          }
-                                                        : null,
+                                                      var freshSubIDs = [];
+                                                      freshSubIDs.addAll(
+                                                          changedSubIDs);
+
+                                                      showDialog(
+                                                          context: context,
+                                                          builder: (context) =>
+                                                              AlertDialog(
+                                                                  title: Text(
+                                                                      'Muokkaa laitetta - ID: ${device['id']}'),
+                                                                  contentPadding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          20.0),
+                                                                  content: Row(
+                                                                    children: [
+                                                                      for (int i =
+                                                                              0;
+                                                                          i < device['total_stock'];
+                                                                          i++)
+                                                                        IconButton(
+                                                                          style:
+                                                                              ButtonStyle(
+                                                                            backgroundColor:
+                                                                                WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
+                                                                              if (states.contains(WidgetState.pressed)) {
+                                                                                return const Color.fromARGB(255, 95, 22, 108);
+                                                                              }
+                                                                              return changedSubIDs.contains('${device['id']}_${i + 1}') ? Colors.grey : Colors.purple;
+                                                                            }),
+                                                                          ),
+                                                                          onPressed:
+                                                                              () {
+                                                                            var newSubID =
+                                                                                '${device['id']}_${i + 1}';
+                                                                            setState(() {
+                                                                              changedSubIDs.contains(newSubID)
+                                                                                  ? {
+                                                                                      changedSubIDs.removeWhere((element) => element == newSubID),
+                                                                                      stockChange = stockChange + 1,
+                                                                                    }
+                                                                                  : {
+                                                                                      changedSubIDs.add(newSubID),
+                                                                                      stockChange = stockChange - 1,
+                                                                                    };
+                                                                              print(changedSubIDs);
+                                                                              print("list length: " + changedSubIDs.length.toString());
+                                                                              print("stock change: " + stockChange.toString());
+                                                                            });
+                                                                          },
+                                                                          icon:
+                                                                              Text("${i + 1}"),
+                                                                        )
+                                                                    ],
+                                                                  ),
+                                                                  //   TextField(
+                                                                  // controller:
+                                                                  //     _controller,
+                                                                  // decoration:
+                                                                  //     InputDecoration(hintText: 'Uusi numero'),
+                                                                  // ),
+                                                                  actions: [
+                                                                    TextButton(
+                                                                      child: Text(
+                                                                          'Valmis'),
+                                                                      onPressed:
+                                                                          () {
+                                                                        if (listEquals(
+                                                                            freshSubIDs,
+                                                                            changedSubIDs)) {
+                                                                          print(
+                                                                              'no changes');
+                                                                          print(
+                                                                              freshSubIDs);
+                                                                          print(
+                                                                              changedSubIDs);
+                                                                          print(
+                                                                              unsavedChangesList);
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                          return;
+                                                                        }
+                                                                        print(
+                                                                            'changes');
+                                                                        print(
+                                                                            freshSubIDs);
+                                                                        print(
+                                                                            changedSubIDs);
+                                                                        String
+                                                                            preppedSubIDs =
+                                                                            '';
+                                                                        for (var subID
+                                                                            in changedSubIDs) {
+                                                                          if (preppedSubIDs
+                                                                              .isNotEmpty) {
+                                                                            preppedSubIDs =
+                                                                                '$preppedSubIDs ';
+                                                                          }
+                                                                          preppedSubIDs =
+                                                                              preppedSubIDs + subID;
+                                                                        }
+
+                                                                        if (preppedSubIDs
+                                                                            .isEmpty) {
+                                                                          preppedSubIDs =
+                                                                              "empty";
+                                                                        }
+
+                                                                        setState(
+                                                                            () {
+                                                                          for (var unsavedChange
+                                                                              in unsavedChangesList) {
+                                                                            if (unsavedChange['id'] ==
+                                                                                device['id']) {
+                                                                              unsavedChange['current_stock'] += stockChange;
+                                                                              unsavedChange['sub_ids'] = preppedSubIDs;
+                                                                            }
+                                                                          }
+                                                                          unsavedChangesList
+                                                                              .add({
+                                                                            'id':
+                                                                                device['id'],
+                                                                            'current_stock':
+                                                                                device['current_stock'] + stockChange,
+                                                                            'sub_ids':
+                                                                                preppedSubIDs
+                                                                          });
+
+                                                                          print(
+                                                                              unsavedChangesList);
+                                                                        });
+
+                                                                        _controller
+                                                                            .clear();
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                    )
+                                                                  ]));
+                                                    },
                                                     child: Icon(Icons.edit)),
                                               ]),
                                         ),
