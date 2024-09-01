@@ -50,6 +50,11 @@ class _MainScreen3State extends State<MainScreen3> {
     {"name": 'lavatekniikka', "devices": []},
   ];
 
+  void initState() {
+    super.initState();
+    getDatabaseInfo();
+  }
+
   getDatabaseInfo() async {
     for (var category in deviceCategories) {
       category['devices'].clear();
@@ -548,25 +553,7 @@ class _MainScreen3State extends State<MainScreen3> {
                   ),
                 ),
               ),
-            ),
-            Flexible(
-              flex: 4,
-              child: Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      getDatabaseInfo();
-                    },
-                    child: Text('Hae tietokanta'),
-                  ),
-                  ElevatedButton(
-                      onPressed: () {
-                        print(unsavedChangesList);
-                      },
-                      child: Text('show text'))
-                ],
-              ),
-            ),
+            )
           ]),
         ),
       );
