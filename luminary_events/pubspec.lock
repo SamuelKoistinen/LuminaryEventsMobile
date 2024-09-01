@@ -201,6 +201,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.5"
+  expandable:
+    dependency: "direct main"
+    description:
+      name: expandable
+      sha256: "9604d612d4d1146dafa96c6d8eec9c2ff0994658d6d09fed720ab788c7f5afc2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.1"
   fake_async:
     dependency: transitive
     description:
@@ -408,6 +416,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.6"
+  mobile_scanner:
+    dependency: "direct main"
+    description:
+      name: mobile_scanner
+      sha256: "6ac2913ad98c83f558d2c8a55bc8f511bdcf28b86639701c04b04c16da1e9ee1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.2.1"
   modular_ui:
     dependency: "direct main"
     description:
@@ -440,6 +456,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.3.0"
+  plugin_platform_interface:
+    dependency: transitive
+    description:
+      name: plugin_platform_interface
+      sha256: "4820fbfdb9478b1ebae27888254d445073732dae3d6ea81f0b7e06d5dedc3f02"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.8"
   pool:
     dependency: transitive
     description:
@@ -647,4 +671,8 @@ packages:
     version: "3.1.2"
 sdks:
   dart: ">=3.4.3 <4.0.0"
+<<<<<<< HEAD
   flutter: ">=3.19.0"
+=======
+  flutter: ">=3.22.0"
+>>>>>>> main
