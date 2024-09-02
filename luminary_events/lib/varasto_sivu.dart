@@ -1,26 +1,14 @@
 import 'dart:convert';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:expandable/expandable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import "package:flutter/material.dart";
 import 'package:intl/intl.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'env.dart';
-
-/*
-Center(
-          child: ElevatedButton(
-            onPressed: () {
-              debugPrint(Env.passwordkey);
-            },
-            child: Text(Env.apikey),
-          ),
-        ),
-*/
 
 class MainScreen3 extends StatefulWidget {
-  MainScreen3({super.key});
+  const MainScreen3({super.key});
 
   @override
   State<MainScreen3> createState() => _MainScreen3State();
@@ -50,6 +38,7 @@ class _MainScreen3State extends State<MainScreen3> {
     {"name": 'lavatekniikka', "devices": []},
   ];
 
+  @override
   void initState() {
     super.initState();
     getDatabaseInfo();
@@ -60,18 +49,16 @@ class _MainScreen3State extends State<MainScreen3> {
       category['devices'].clear();
     }
     final response =
-        await http.get(Uri.parse("https://mekelektro.com/devices"));
+        await http.get(Uri.parse("${dotenv.env['BASEURL']}devices"));
     if (response.statusCode == 200) {
       final List parsedList = json.decode(response.body);
       for (var device in parsedList) {
         for (var category in deviceCategories) {
           if (device['type'] == category['name']) {
             category['devices'].add(device);
-            print("device added");
           }
         }
       }
-      print(deviceCategories);
       setState(() => {});
     } else {
       throw Exception('Failed to load database info');
@@ -80,11 +67,8 @@ class _MainScreen3State extends State<MainScreen3> {
 
   sendUpdatedData() async {
     for (var device in unsavedChangesList) {
-      print(device);
-      print(device['id']);
-      print(device['current_stock']);
       final response = await http.put(
-        Uri.parse("https://mekelektro.com/devices/${device['id']}"),
+        Uri.parse("${dotenv.env['BASEURL']}devices/${device['id']}"),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -95,8 +79,6 @@ class _MainScreen3State extends State<MainScreen3> {
       );
       if (response.statusCode == 201) {
       } else {
-        print(response.body);
-        print(response.statusCode);
         throw Exception('Failed to send updated data');
       }
     }
@@ -119,8 +101,6 @@ class _MainScreen3State extends State<MainScreen3> {
   processBarCode(String? barcode) async {
     qrCodeProcessed = true;
 
-    print('PROCESSING BARCODE');
-
     if (barcode == null) {
       return;
     }
@@ -128,16 +108,15 @@ class _MainScreen3State extends State<MainScreen3> {
     if (barcodeSplit.length != 2) {
       return;
     }
+    // ignore: prefer_typing_uninitialized_variables
     var device;
     final response = await http
-        .get(Uri.parse("https://mekelektro.com/devices/${barcodeSplit[0]}"));
+        .get(Uri.parse("${dotenv.env['BASEURL']}devices/${barcodeSplit[0]}"));
     if (response.statusCode == 200) {
       device = json.decode(response.body);
     } else {
       throw Exception('Failed to load database info');
     }
-
-    print(device);
 
     setupSubIDs(device['sub_ids']);
 
@@ -175,8 +154,6 @@ class _MainScreen3State extends State<MainScreen3> {
         'current_stock': device['current_stock'] + stockChange,
         'sub_ids': preppedSubIDs
       });
-
-      print(unsavedChangesList);
     });
   }
 
@@ -188,7 +165,7 @@ class _MainScreen3State extends State<MainScreen3> {
             Flexible(
               flex: 1,
               child: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                     border: Border(
                         bottom:
                             BorderSide(width: 3, color: Color(0xFF201C24)))),
@@ -208,7 +185,7 @@ class _MainScreen3State extends State<MainScreen3> {
                                         contentPadding:
                                             const EdgeInsets.all(20.0),
                                         children: [
-                                          Container(
+                                          SizedBox(
                                               width: MediaQuery.of(context)
                                                       .size
                                                       .width -
@@ -229,7 +206,7 @@ class _MainScreen3State extends State<MainScreen3> {
                                                       Navigator.pop(context);
                                                       return;
                                                     }
-                                                    ;
+
                                                     processBarCode(capture
                                                         .barcodes[0].rawValue);
                                                     Navigator.pop(context);
@@ -237,35 +214,35 @@ class _MainScreen3State extends State<MainScreen3> {
                                         ],
                                       ));
                             },
-                            icon: Icon(Icons.qr_code_scanner),
-                            label: Text('Skannaa QR'),
+                            icon: const Icon(Icons.qr_code_scanner),
+                            label: const Text('Skannaa QR'),
                           ),
                           unsavedChangesList.isNotEmpty
-                              ? Text('Unsaved changes',
+                              ? const Text('Unsaved changes',
                                   style: TextStyle(
                                       fontStyle: FontStyle.italic,
                                       color: Colors.red))
-                              : Text(''),
+                              : const Text(''),
                         ])),
                   ),
                   Flexible(
                     flex: 1,
-                    child: Container(
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
                           IconButton(
                               onPressed: unsavedChangesList.isNotEmpty
                                   ? () {
                                       showDialog(
                                           context: context,
                                           builder: (context) => SimpleDialog(
-                                                  title: Text('Varmistus'),
+                                                  title:
+                                                      const Text('Varmistus'),
                                                   contentPadding:
                                                       const EdgeInsets.all(
                                                           20.0),
                                                   children: [
-                                                    Text(
+                                                    const Text(
                                                         'Haluatko varmasti hylätä muutokset?'),
                                                     Row(
                                                       mainAxisAlignment:
@@ -276,7 +253,7 @@ class _MainScreen3State extends State<MainScreen3> {
                                                               Navigator.pop(
                                                                   context);
                                                             },
-                                                            child: Text(
+                                                            child: const Text(
                                                                 'Peruuta')),
                                                         ElevatedButton(
                                                             onPressed: () {
@@ -287,26 +264,27 @@ class _MainScreen3State extends State<MainScreen3> {
                                                               Navigator.pop(
                                                                   context);
                                                             },
-                                                            child: Text(
+                                                            child: const Text(
                                                                 'Hylkää muutokset')),
                                                       ],
                                                     ),
                                                   ]));
                                     }
                                   : null,
-                              icon: Icon(Icons.settings_backup_restore)),
+                              icon: const Icon(Icons.settings_backup_restore)),
                           IconButton(
                               onPressed: unsavedChangesList.isNotEmpty
                                   ? () {
                                       showDialog(
                                           context: context,
                                           builder: (context) => SimpleDialog(
-                                                  title: Text('Varmistus'),
+                                                  title:
+                                                      const Text('Varmistus'),
                                                   contentPadding:
                                                       const EdgeInsets.all(
                                                           20.0),
                                                   children: [
-                                                    Text(
+                                                    const Text(
                                                         'Haluatko varmasti tallentaa muutokset?'),
                                                     Row(
                                                       mainAxisAlignment:
@@ -317,7 +295,7 @@ class _MainScreen3State extends State<MainScreen3> {
                                                               Navigator.pop(
                                                                   context);
                                                             },
-                                                            child: Text(
+                                                            child: const Text(
                                                                 'Peruuta')),
                                                         ElevatedButton(
                                                             onPressed: () {
@@ -325,232 +303,219 @@ class _MainScreen3State extends State<MainScreen3> {
                                                               Navigator.pop(
                                                                   context);
                                                             },
-                                                            child: Text(
+                                                            child: const Text(
                                                                 'Tallenna muutokset')),
                                                       ],
                                                     ),
                                                   ]));
                                     }
                                   : null,
-                              icon: Icon(Icons.save)),
-                        ])),
+                              icon: const Icon(Icons.save)),
+                        ]),
                   ),
                 ]),
               ),
             ),
             Flexible(
               flex: 10,
-              child: Container(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      for (var category in deviceCategories)
-                        Card(
-                          child: Container(
-                            child: ExpandableTheme(
-                              data: ExpandableThemeData(
-                                  hasIcon: true, iconColor: Colors.white),
-                              child: ExpandablePanel(
-                                header: Container(
-                                  margin:
-                                      const EdgeInsets.fromLTRB(10, 0, 10, 0),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                          toBeginningOfSentenceCase(
-                                              category['name']),
-                                          style: TextStyle(fontSize: 25))
-                                    ],
-                                  ),
-                                ),
-                                collapsed: Container(),
-                                expanded: Column(
-                                  children: [
-                                    for (var device in category['devices'])
-                                      Card(
-                                        child: Container(
-                                          margin:
-                                              EdgeInsets.fromLTRB(10, 0, 10, 0),
-                                          child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (var category in deviceCategories)
+                      Card(
+                        child: ExpandableTheme(
+                          data: const ExpandableThemeData(
+                              hasIcon: true, iconColor: Colors.white),
+                          child: ExpandablePanel(
+                            header: Container(
+                              margin: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                      toBeginningOfSentenceCase(
+                                          category['name']),
+                                      style: const TextStyle(fontSize: 25))
+                                ],
+                              ),
+                            ),
+                            collapsed: Container(),
+                            expanded: Column(
+                              children: [
+                                for (var device in category['devices'])
+                                  Card(
+                                    child: Container(
+                                      margin: const EdgeInsets.fromLTRB(
+                                          10, 0, 10, 0),
+                                      child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
                                               children: [
-                                                Column(
-                                                  children: [
-                                                    Text(device['name']),
-                                                    Text('Stock: ' +
-                                                        device['current_stock']
-                                                            .toString() +
-                                                        ' / ' +
-                                                        device['total_stock']
-                                                            .toString()),
-                                                  ],
-                                                ),
-                                                ElevatedButton(
-                                                    onPressed: () {
-                                                      if (device['sub_ids'] !=
-                                                          null) {
-                                                        setupSubIDs(
-                                                            device['sub_ids']);
-                                                      } else {
-                                                        setupSubIDs('');
-                                                      }
+                                                Text(device['name']),
+                                                Text(
+                                                    'Stock: ${device['current_stock']} / ${device['total_stock']}'),
+                                              ],
+                                            ),
+                                            ElevatedButton(
+                                                onPressed: () {
+                                                  if (device['sub_ids'] !=
+                                                      null) {
+                                                    setupSubIDs(
+                                                        device['sub_ids']);
+                                                  } else {
+                                                    setupSubIDs('');
+                                                  }
 
-                                                      var freshSubIDs = [];
-                                                      freshSubIDs.addAll(
-                                                          changedSubIDs);
+                                                  var freshSubIDs = [];
+                                                  freshSubIDs
+                                                      .addAll(changedSubIDs);
 
-                                                      showDialog(
-                                                          context: context,
-                                                          builder: (context) =>
-                                                              AlertDialog(
-                                                                  title: Text(
-                                                                      'Muokkaa laitetta - ID: ${device['id']}'),
-                                                                  contentPadding:
-                                                                      const EdgeInsets
-                                                                          .all(
-                                                                          20.0),
-                                                                  content: Row(
-                                                                    children: [
-                                                                      for (int i =
-                                                                              0;
-                                                                          i < device['total_stock'];
-                                                                          i++)
-                                                                        IconButton(
-                                                                          style:
-                                                                              ButtonStyle(
-                                                                            backgroundColor:
-                                                                                WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) {
-                                                                              if (states.contains(WidgetState.pressed)) {
-                                                                                return const Color.fromARGB(255, 95, 22, 108);
-                                                                              }
-                                                                              return changedSubIDs.contains('${device['id']}_${i + 1}') ? Colors.grey : Colors.purple;
-                                                                            }),
-                                                                          ),
-                                                                          onPressed:
-                                                                              () {
-                                                                            var newSubID =
-                                                                                '${device['id']}_${i + 1}';
-                                                                            setState(() {
-                                                                              changedSubIDs.contains(newSubID)
-                                                                                  ? {
-                                                                                      changedSubIDs.removeWhere((element) => element == newSubID),
-                                                                                      stockChange = stockChange + 1,
-                                                                                    }
-                                                                                  : {
-                                                                                      changedSubIDs.add(newSubID),
-                                                                                      stockChange = stockChange - 1,
-                                                                                    };
-                                                                              print(changedSubIDs);
-                                                                              print("list length: " + changedSubIDs.length.toString());
-                                                                              print("stock change: " + stockChange.toString());
-                                                                            });
-                                                                          },
-                                                                          icon:
-                                                                              Text("${i + 1}"),
-                                                                        )
-                                                                    ],
-                                                                  ),
-                                                                  //   TextField(
-                                                                  // controller:
-                                                                  //     _controller,
-                                                                  // decoration:
-                                                                  //     InputDecoration(hintText: 'Uusi numero'),
-                                                                  // ),
-                                                                  actions: [
-                                                                    TextButton(
-                                                                      child: Text(
-                                                                          'Valmis'),
+                                                  showDialog(
+                                                      context: context,
+                                                      builder: (context) =>
+                                                          AlertDialog(
+                                                              title: Text(
+                                                                  'Muokkaa laitetta - ID: ${device['id']}'),
+                                                              contentPadding:
+                                                                  const EdgeInsets
+                                                                      .all(
+                                                                      20.0),
+                                                              content: Row(
+                                                                children: [
+                                                                  for (int i =
+                                                                          0;
+                                                                      i <
+                                                                          device[
+                                                                              'total_stock'];
+                                                                      i++)
+                                                                    IconButton(
+                                                                      style:
+                                                                          ButtonStyle(
+                                                                        backgroundColor: WidgetStateProperty.resolveWith<
+                                                                            Color>((Set<
+                                                                                WidgetState>
+                                                                            states) {
+                                                                          if (states
+                                                                              .contains(WidgetState.pressed)) {
+                                                                            return const Color.fromARGB(
+                                                                                255,
+                                                                                95,
+                                                                                22,
+                                                                                108);
+                                                                          }
+                                                                          return changedSubIDs.contains('${device['id']}_${i + 1}')
+                                                                              ? Colors.grey
+                                                                              : Colors.purple;
+                                                                        }),
+                                                                      ),
                                                                       onPressed:
                                                                           () {
-                                                                        if (listEquals(
-                                                                            freshSubIDs,
-                                                                            changedSubIDs)) {
-                                                                          print(
-                                                                              'no changes');
-                                                                          print(
-                                                                              freshSubIDs);
-                                                                          print(
-                                                                              changedSubIDs);
-                                                                          print(
-                                                                              unsavedChangesList);
-                                                                          Navigator.pop(
-                                                                              context);
-                                                                          return;
-                                                                        }
-                                                                        print(
-                                                                            'changes');
-                                                                        print(
-                                                                            freshSubIDs);
-                                                                        print(
-                                                                            changedSubIDs);
-                                                                        String
-                                                                            preppedSubIDs =
-                                                                            '';
-                                                                        for (var subID
-                                                                            in changedSubIDs) {
-                                                                          if (preppedSubIDs
-                                                                              .isNotEmpty) {
-                                                                            preppedSubIDs =
-                                                                                '$preppedSubIDs ';
-                                                                          }
-                                                                          preppedSubIDs =
-                                                                              preppedSubIDs + subID;
-                                                                        }
-
-                                                                        if (preppedSubIDs
-                                                                            .isEmpty) {
-                                                                          preppedSubIDs =
-                                                                              "empty";
-                                                                        }
-
+                                                                        var newSubID =
+                                                                            '${device['id']}_${i + 1}';
                                                                         setState(
                                                                             () {
-                                                                          for (var unsavedChange
-                                                                              in unsavedChangesList) {
-                                                                            if (unsavedChange['id'] ==
-                                                                                device['id']) {
-                                                                              unsavedChange['current_stock'] += stockChange;
-                                                                              unsavedChange['sub_ids'] = preppedSubIDs;
-                                                                            }
-                                                                          }
-                                                                          unsavedChangesList
-                                                                              .add({
-                                                                            'id':
-                                                                                device['id'],
-                                                                            'current_stock':
-                                                                                device['current_stock'] + stockChange,
-                                                                            'sub_ids':
-                                                                                preppedSubIDs
-                                                                          });
-
-                                                                          print(
-                                                                              unsavedChangesList);
+                                                                          changedSubIDs.contains(newSubID)
+                                                                              ? {
+                                                                                  changedSubIDs.removeWhere((element) => element == newSubID),
+                                                                                  stockChange = stockChange + 1,
+                                                                                }
+                                                                              : {
+                                                                                  changedSubIDs.add(newSubID),
+                                                                                  stockChange = stockChange - 1,
+                                                                                };
                                                                         });
-
-                                                                        _controller
-                                                                            .clear();
-                                                                        Navigator.pop(
-                                                                            context);
                                                                       },
+                                                                      icon: Text(
+                                                                          "${i + 1}"),
                                                                     )
-                                                                  ]));
-                                                    },
-                                                    child: Icon(Icons.edit)),
-                                              ]),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
+                                                                ],
+                                                              ),
+                                                              //   TextField(
+                                                              // controller:
+                                                              //     _controller,
+                                                              // decoration:
+                                                              //     InputDecoration(hintText: 'Uusi numero'),
+                                                              // ),
+                                                              actions: [
+                                                                TextButton(
+                                                                  child: const Text(
+                                                                      'Valmis'),
+                                                                  onPressed:
+                                                                      () {
+                                                                    if (listEquals(
+                                                                        freshSubIDs,
+                                                                        changedSubIDs)) {
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                      return;
+                                                                    }
+
+                                                                    String
+                                                                        preppedSubIDs =
+                                                                        '';
+                                                                    for (var subID
+                                                                        in changedSubIDs) {
+                                                                      if (preppedSubIDs
+                                                                          .isNotEmpty) {
+                                                                        preppedSubIDs =
+                                                                            '$preppedSubIDs ';
+                                                                      }
+                                                                      preppedSubIDs =
+                                                                          preppedSubIDs +
+                                                                              subID;
+                                                                    }
+
+                                                                    if (preppedSubIDs
+                                                                        .isEmpty) {
+                                                                      preppedSubIDs =
+                                                                          "empty";
+                                                                    }
+
+                                                                    setState(
+                                                                        () {
+                                                                      for (var unsavedChange
+                                                                          in unsavedChangesList) {
+                                                                        if (unsavedChange['id'] ==
+                                                                            device['id']) {
+                                                                          unsavedChange['current_stock'] +=
+                                                                              stockChange;
+                                                                          unsavedChange['sub_ids'] =
+                                                                              preppedSubIDs;
+                                                                        }
+                                                                      }
+                                                                      unsavedChangesList
+                                                                          .add({
+                                                                        'id': device[
+                                                                            'id'],
+                                                                        'current_stock':
+                                                                            device['current_stock'] +
+                                                                                stockChange,
+                                                                        'sub_ids':
+                                                                            preppedSubIDs
+                                                                      });
+                                                                    });
+
+                                                                    _controller
+                                                                        .clear();
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  },
+                                                                )
+                                                              ]));
+                                                },
+                                                child: const Icon(Icons.edit)),
+                                          ]),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
             )

@@ -1,3 +1,4 @@
+import "package:flutter_dotenv/flutter_dotenv.dart";
 import "package:intl/date_symbol_data_local.dart";
 import "package:luminary_events/interactive_example.dart";
 import "package:flutter/material.dart";
@@ -6,7 +7,8 @@ import "package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart";
 import "varasto_sivu.dart";
 import "etu_sivu.dart";
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
   // make navigation bar transparent
   SystemChrome.setSystemUIOverlayStyle(
@@ -25,26 +27,10 @@ class PersistenBottomNavBarDemo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: "Persistent Bottom Navigation Bar Demo",
-        themeMode: ThemeMode.dark,
-        darkTheme: ThemeData(brightness: Brightness.dark),
-        home: Builder(
-          builder: (context) => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed("/interactive"),
-                  child: const Text("Reroute Button Example"),
-                ),
-              ],
-            ),
-          ),
-        ),
-        routes: {"/interactive": (context) => const InteractiveExample()},
-      );
+      title: "Persistent Bottom Navigation Bar Demo",
+      themeMode: ThemeMode.dark,
+      darkTheme: ThemeData(brightness: Brightness.dark),
+      home: const InteractiveExample());
 }
 
 class MinimalExample extends StatelessWidget {
