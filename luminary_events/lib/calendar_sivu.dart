@@ -227,14 +227,13 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
 
       data.removeWhere((key, value) => value == null);
       String jsonData = jsonEncode(data);
-
       var response = await http.put(
           Uri.parse('${dotenv.env['BASEURL']}${dotenv.env['APIKEY']}/$id'),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
           },
           body: jsonData);
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         log('data: $jsonData');
         setState(() {
           _selectedEvents.value.clear();
@@ -251,6 +250,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
 
   @override
   Widget build(BuildContext context) {
+    initializeData();
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(title: const Text("Tapahtumakalenteri")),
@@ -496,9 +496,31 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                 ),
                                                 actions: [
                                                   TextButton(
+<<<<<<< Updated upstream
                                                     onPressed: () {
                                                       editEvent(e.id);
                                                       Navigator.pop(context);
+=======
+                                                      onPressed: () {
+                                                        _selectedEvents.value =
+                                                            _getEventsForDay(
+                                                                _selectedDay!);
+                                                        clearController();
+                                                        Navigator.pop(context);
+                                                        initializeData();
+                                                      },
+                                                      child:
+                                                          const Text('Peru')),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      if (_formKey.currentState!
+                                                          .validate()) {
+                                                        editEvent(e.id);
+                                                        clearController();
+                                                        Navigator.pop(context);
+                                                        initializeData();
+                                                      }
+>>>>>>> Stashed changes
                                                     },
                                                     child:
                                                         const Text('Päivitä'),
@@ -508,9 +530,54 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                             );
                                           }),
                                           textBtn(context, 'Poista', () {
+<<<<<<< Updated upstream
                                             deleteEvent(e.id);
                                             _selectedEvents.value =
                                                 _getEventsForDay(_selectedDay!);
+=======
+                                            showDialog(
+                                                context: context,
+                                                builder: (BuildContext
+                                                        context) =>
+                                                    AlertDialog(
+                                                      scrollable: true,
+                                                      title: const Text(
+                                                          'Haluatko Varmasti Poistaa Tapahtuman?'),
+                                                      content: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8),
+                                                      ),
+                                                      actions: [
+                                                        TextButton(
+                                                            onPressed: () {
+                                                              _selectedEvents
+                                                                      .value =
+                                                                  _getEventsForDay(
+                                                                      _selectedDay!);
+                                                              clearController();
+                                                              Navigator.pop(
+                                                                  context);
+                                                              initializeData();
+                                                            },
+                                                            child: const Text(
+                                                                'Peru')),
+                                                        TextButton(
+                                                            onPressed: () {
+                                                              deleteEvent(e.id);
+                                                              _selectedEvents
+                                                                      .value =
+                                                                  _getEventsForDay(
+                                                                      _selectedDay!);
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: const Text(
+                                                                'Poista')),
+                                                      ],
+                                                    ));
+                                            ;
+>>>>>>> Stashed changes
                                           }),
                                         ],
                                       ),
@@ -527,6 +594,152 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
             ],
           ),
         ),
+<<<<<<< Updated upstream
+=======
+        floatingActionButton: FloatingActionButton(
+          heroTag: "btn2",
+          shape: CircleBorder(),
+          onPressed: () {
+            // todo: Show dialog to user to input event
+            showDialog(
+                context: context,
+                builder: (BuildContext context) => AlertDialog(
+                      scrollable: true,
+                      title: const Text('Uusi tapahtuma'),
+                      content: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Syötä Nimi!';
+                                  } else if (value.length > 35) {
+                                    return 'Max. 35 merkkiä!';
+                                  }
+                                  return null;
+                                },
+                                controller: _customerController,
+                                decoration: const InputDecoration(
+                                    helperText: 'Asiakkaan nimi'),
+                              ),
+                              TextFormField(
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Syötä Puhelinnumero!';
+                                  } else if (value.length > 13 ||
+                                      value.length < 7) {
+                                    return 'Tarkista puhelinnumero!';
+                                  }
+                                  return null;
+                                },
+                                controller: _phoneController,
+                                decoration: const InputDecoration(
+                                    helperText: 'Puhelin'),
+                              ),
+                              TextFormField(
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Syötä Sähköpostiosoite!';
+                                  } else if (value.length > 35 ||
+                                      value.length < 4) {
+                                    return 'Tarkista sähköposti!';
+                                  }
+                                  return null;
+                                },
+                                controller: _emailController,
+                                decoration:
+                                    const InputDecoration(helperText: 'Email'),
+                              ),
+                              TextFormField(
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Syötä Tilauksen kesto!';
+                                  } else if (value == '0') {
+                                    return 'Kesto ei voi olla 0!';
+                                  }
+                                  return null;
+                                },
+                                controller: _orderLengthController,
+                                decoration: const InputDecoration(
+                                    helperText: 'Kesto (pelkkä numero)'),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: <TextInputFormatter>[
+                                  FilteringTextInputFormatter.digitsOnly
+                                ],
+                              ),
+                              TextFormField(
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Syötä Hinta!';
+                                  }
+                                  return null;
+                                },
+                                controller: _priceController,
+                                decoration: const InputDecoration(
+                                    helperText: 'Hinta (pelkkä numero)'),
+                                keyboardType: TextInputType.number,
+                              ),
+                              TextFormField(
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Syötä Maksupäivä! (YYYY-MM-DD)';
+                                  }
+                                  return null;
+                                },
+                                controller: _dueDateController,
+                                decoration: const InputDecoration(
+                                    helperText: 'Maksupäivä (YYYY-MM-DD)'),
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [DateTextFormatter()],
+                                onChanged: (String value) {},
+                              ),
+                              TextFormField(
+                                validator: (value) {
+                                  if (value!.length > 300) {
+                                    return 'Viestin enimmäispituus on 300 merkkiä.';
+                                  }
+                                  return null;
+                                },
+                                controller: _messageController,
+                                decoration: const InputDecoration(
+                                    helperText: 'Viesti (Valinnainen)'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      actions: [
+                        ElevatedButton(
+                            onPressed: () {
+                              _selectedEvents.value =
+                                  _getEventsForDay(_selectedDay!);
+                              clearController();
+                              Navigator.pop(context);
+                              initializeData();
+                            },
+                            child: const Text('Peru')),
+                        ElevatedButton(
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                postEvent();
+                                _selectedEvents.value =
+                                    _getEventsForDay(_selectedDay!);
+                                clearController();
+                                Navigator.pop(context);
+                                initializeData();
+                              }
+                            },
+                            child: const Text('Tallenna')),
+                      ],
+                    ));
+          },
+          child: const Icon(Icons.add),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+>>>>>>> Stashed changes
       ),
     );
   }
