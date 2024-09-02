@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:collection';
 import 'dart:developer';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:table_calendar/table_calendar.dart';
-import 'env.dart';
 
 /// Calendar event class.
 class Event {
@@ -66,7 +66,8 @@ List<DateTime> daysInRange(DateTime first, DateTime last) {
 Future<Map<String, dynamic>> fetchMapData(DateTime selectedDay) async {
   try {
     var response = await http.get(
-      Uri.parse('${Env.baseurl}${Env.apikey}${selectedDay.toString()}'),
+      Uri.parse(
+          '${dotenv.env['BASEURL']}${dotenv.env['APIKEY']}${selectedDay.toString()}'),
     );
 
     if (response.statusCode == 200) {
@@ -84,7 +85,8 @@ Future<Map<String, dynamic>> fetchMapData(DateTime selectedDay) async {
 // Function to fetch event data
 Future<void> fetchData() async {
   try {
-    var response = await http.get(Uri.parse('${Env.baseurl}${Env.apikey}'));
+    var response = await http
+        .get(Uri.parse('${dotenv.env['BASEURL']}${dotenv.env['APIKEY']}'));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       //log('data $data');

@@ -8,7 +8,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import '../utils.dart';
 import 'package:http/http.dart' as http;
-import 'env.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 //     ⢰⣶⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⣶⢰⠀
 //   ⠀  ⣿⣿⣿⣷⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⣤⣶⣾⣿⣿⣿⠀
@@ -55,6 +55,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
   void initState() {
     super.initState();
 
+    initializeData();
     _selectedDay = _focusedDay;
     _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
   }
@@ -64,6 +65,11 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
     _textFieldController.dispose();
     _selectedEvents.dispose();
     super.dispose();
+  }
+
+  void initializeData() async {
+    await fetchData();
+    setState(() => {});
   }
 
 //*GET EVENTS PER DAY
@@ -137,8 +143,8 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
   // DELETE REQUEST
   void deleteEvent(int id) async {
     try {
-      var response =
-          await http.delete(Uri.parse('${Env.baseurl}${Env.apikey}/$id'));
+      var response = await http.delete(
+          Uri.parse('${dotenv.env['BASEURL']}${dotenv.env['APIKEY']}/$id'));
       if (response.statusCode == 200) {
         setState(() {
           _selectedEvents.value.clear();
@@ -173,7 +179,8 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
         'message': _messageController.text
       });
 
-      var response = await http.post(Uri.parse('${Env.baseurl}${Env.apikey}'),
+      var response = await http.post(
+          Uri.parse('${dotenv.env['BASEURL']}${dotenv.env['APIKEY']}'),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
           },
@@ -219,13 +226,14 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
 
       data.removeWhere((key, value) => value == null);
       String jsonData = jsonEncode(data);
-      var response =
-          await http.put(Uri.parse('${Env.baseurl}${Env.apikey}/$id'),
-              headers: <String, String>{
-                'Content-Type': 'application/json; charset=UTF-8',
-              },
-              body: jsonData);
-      if (response.statusCode == 201) {
+
+      var response = await http.put(
+          Uri.parse('${dotenv.env['BASEURL']}${dotenv.env['APIKEY']}/$id'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonData);
+      if (response.statusCode == 200) {
         log('data: $jsonData');
         setState(() {
           _selectedEvents.value.clear();
@@ -242,7 +250,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
 
   @override
   Widget build(BuildContext context) {
-    fetchData();
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(title: const Text("Tapahtumakalenteri")),
@@ -252,17 +259,41 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                child: Text(
-                  textAlign: TextAlign.center,
-                  DateFormat('dd-MM-yyyy').format(_selectedDay!),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  Flexible(
+                    flex: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 14),
+                      child: Text(
+                        textAlign: TextAlign.center,
+                        DateFormat('dd-MM-yyyy').format(_selectedDay!),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  Flexible(
+                    flex: 5,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            showDialog(
+                                context: context,
+                                builder: (_) => _dialogWidget(context));
+                          },
+                          label: const Text("Uusi tapahtuma"),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
               ),
               TableCalendar<Event>(
                 headerStyle: HeaderStyle(
@@ -323,7 +354,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                       mainAxisSize: MainAxisSize.min,
                       children: value
                           .map((e) => Card(
-                              color: Colors.white,
+                              color: Color(0xFF2E2B38),
                               child: Container(
                                 margin: const EdgeInsets.symmetric(
                                     vertical: 20, horizontal: 14),
