@@ -26,6 +26,8 @@ class PersistenBottomNavBarDemo extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
         title: "Persistent Bottom Navigation Bar Demo",
+        themeMode: ThemeMode.dark,
+        darkTheme: ThemeData(brightness: Brightness.dark),
         home: Builder(
           builder: (context) => Center(
             child: Column(
@@ -64,7 +66,7 @@ class MinimalExample extends StatelessWidget {
           ),
         ),
         PersistentTabConfig(
-          screen: const MainScreen3(),
+          screen: MainScreen3(),
           item: ItemConfig(
             icon: const Icon(Icons.warehouse),
             title: "Varasto",

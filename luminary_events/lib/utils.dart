@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:collection';
 import 'dart:developer';
-import 'package:luminary_events/CalendarSivu.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:table_calendar/table_calendar.dart';
 import 'env.dart';
@@ -134,7 +132,7 @@ Future<void> fetchData() async {
           DateTime startDate = DateTime.parse(orderStartDate).toLocal();
           DateTime endDate = DateTime.parse(orderEndDate).toLocal();
 
-          String eventTitle = customerName;
+          String eventTitle = '$customerName:n Tapahtuma #$eventId';
           Event event = Event(
             id: eventId,
             price: price,
@@ -175,17 +173,24 @@ List<Event> retrieveEventsForNext7Days() {
   final List<Event> events = [];
 
   for (int i = 0; i < 7; i++) {
-    final DateTime day =
-        DateTime(today.year, today.month, today.day + i); // Normalized date
-    if (kEvents.containsKey(day)) {
-      final eventsForDay = kEvents[day]!;
-      print('Events for $day:');
+    final DateTime day = DateTime(today.year, today.month, today.day + i);
+
+    // Normalize the date to ensure it matches the keys in kEvents
+    final DateTime normalizedDay = DateTime(day.year, day.month, day.day);
+
+    if (kEvents.containsKey(normalizedDay)) {
+      final eventsForDay = kEvents[normalizedDay]!;
+      log('Events for $normalizedDay:');
+
       for (var event in eventsForDay) {
-        print('- ${event.title}');
-        print('- Order Start Date: ${event.orderStartDate}');
-        print('- Order Length Days: ${event.orderLengthDays}');
-        print('- Order End Date: ${event.orderEndDate}');
-        print('- Customer Name: ${event.customerName}');
+        log('- ${event.title}');
+        log('- Order Start Date: ${event.orderStartDate}');
+        log('- Order Length Days: ${event.orderLengthDays}');
+        log('- Order End Date: ${event.orderEndDate}');
+        log('- Customer Name: ${event.customerName}');
+
+        // Add the event to the list
+        events.add(event);
       }
     }
   }

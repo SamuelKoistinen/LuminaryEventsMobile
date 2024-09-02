@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'utils.dart';
+import 'package:intl/intl.dart';
 
 // Entry point of the Flutter application
 void main() {
@@ -44,7 +45,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Etusivu"),
+        title: const Text("Tapahtumat viikon aikana"),
         centerTitle: true,
       ),
       backgroundColor: const Color.fromARGB(255, 34, 32, 33),
@@ -58,8 +59,7 @@ class _MainScreenState extends State<MainScreen> {
             return Center(
                 child: Text('Error: ${snapshot.error}')); // Error message
           } else {
-            final List<Event> events =
-                retrieveEventsForNext7Days(); // Retrieve events after data fetch
+            final List<Event> events = retrieveEventsForNext7Days();
             if (events.isEmpty) {
               return const Center(
                   child: Text('No events found.')); // No events message
@@ -70,13 +70,22 @@ class _MainScreenState extends State<MainScreen> {
               itemCount: events.length,
               itemBuilder: (BuildContext context, int index) {
                 final event = events[index];
+                final startDateToBeFormatted =
+                    DateTime.parse(event.orderStartDate);
+                final endDateToBeFormatted = DateTime.parse(event.orderEndDate);
+                final formatter = DateFormat.yMMMMd('fi_FI');
+                final startDate = formatter.format(startDateToBeFormatted);
+                final endDate = formatter.format(endDateToBeFormatted);
                 return Container(
-                  color: Color.fromARGB(255, 75, 149, 209),
+                  color: const Color.fromARGB(255, 75, 149, 209),
                   child: ListTile(
                     title: Text(event.title),
                     subtitle: Text(
-                      'From ${event.orderStartDate} to ${event.orderEndDate}\n'
-                      'Customer: ${event.customerName}',
+                      'From $startDate to $endDate\n'
+                      'Customer: ${event.customerName}\n'
+                      'Message: ${event.message}\n'
+                      'Contact Email: ${event.customerEmail}\n'
+                      'Customer Phone: ${event.customerPhone}',
                     ),
                   ),
                 );
