@@ -219,7 +219,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
 
       data.removeWhere((key, value) => value == null);
       String jsonData = jsonEncode(data);
-
       var response =
           await http.put(Uri.parse('${Env.baseurl}${Env.apikey}/$id'),
               headers: <String, String>{
@@ -482,7 +481,10 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                               return null;
                                                             },
                                                             controller:
-                                                                _orderLengthController,
+                                                                _orderLengthController
+                                                                  ..text = e
+                                                                      .orderLengthDays
+                                                                      .toString(),
                                                             decoration:
                                                                 InputDecoration(
                                                                     helperText:
