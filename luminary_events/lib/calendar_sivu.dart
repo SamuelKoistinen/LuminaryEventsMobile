@@ -260,17 +260,41 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                child: Text(
-                  textAlign: TextAlign.center,
-                  DateFormat('dd-MM-yyyy').format(_selectedDay!),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  Flexible(
+                    flex: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 14),
+                      child: Text(
+                        textAlign: TextAlign.center,
+                        DateFormat('dd-MM-yyyy').format(_selectedDay!),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  Flexible(
+                    flex: 5,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.add),
+                          onPressed: () {
+                            showDialog(
+                                context: context,
+                                builder: (_) => _dialogWidget(context));
+                          },
+                          label: const Text("Uusi tapahtuma"),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
               ),
               TableCalendar<Event>(
                 headerStyle: HeaderStyle(
@@ -331,7 +355,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                       mainAxisSize: MainAxisSize.min,
                       children: value
                           .map((e) => Card(
-                              color: Colors.white,
+                              color: Color(0xFF2E2B38),
                               child: Container(
                                 margin: const EdgeInsets.symmetric(
                                     vertical: 20, horizontal: 14),
@@ -503,17 +527,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
             ],
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          heroTag: "btn2",
-          onPressed: () {
-            // todo: Show dialog to user to input event
-            showDialog(
-                context: context, builder: (_) => _dialogWidget(context));
-          },
-          label: const Text('Uusi Tapahtuma'),
-          icon: const Icon(Icons.add),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       ),
     );
   }
