@@ -249,7 +249,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
 
   @override
   Widget build(BuildContext context) {
-    initializeData();
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(title: const Text("Tapahtumakalenteri")),
