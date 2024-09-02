@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:math' as math;
 import "package:flutter/material.dart";
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
@@ -26,10 +28,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 //  |             kalenterinäkymä on tässä.               |
 //   -----------------------------------------------------
 
-// HUOM! Kalenterinäkymässä tapahtuman poisto parhaillaan poistaa
-// kaikki päivän tapahtumat, kun sen reworkkaa toimimaan tietokannan kautta,
-// varmista että muokkaus ja poisto toimivat oikein.
-
 class CalendarSivu extends StatefulWidget {
   const CalendarSivu({super.key});
 
@@ -42,11 +40,12 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
   late final ValueNotifier<List<Event>> _selectedEvents;
   CalendarFormat _calendarFormat = CalendarFormat.month;
   RangeSelectionMode _rangeSelectionMode = RangeSelectionMode
-      .toggledOff; // Can be toggled on/off by longpressing a date
+      .disabled; // Can be toggled on/off by longpressing a date
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   DateTime? _rangeStart;
   DateTime? _rangeEnd;
+  final _formKey = GlobalKey<FormState>();
 
   //This is the controller used to edit the new events text field
 
@@ -211,7 +210,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
             .substring(0, 10),
         'order_length_days': int.tryParse(_orderLengthController.text),
         'order_end_date': DateTime.tryParse(_startDateController.text)
-            ?.add(Duration(days: int.parse(_orderLengthController.text)))
+            ?.add(Duration(days: int.parse(_orderLengthController.text) - 1))
             .toIso8601String()
             .substring(0, 10),
         'payment_due_date': DateTime.tryParse(_dueDateController.text)
@@ -281,17 +280,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                     flex: 5,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton.icon(
-                          icon: const Icon(Icons.add),
-                          onPressed: () {
-                            showDialog(
-                                context: context,
-                                builder: (_) => _dialogWidget(context));
-                          },
-                          label: const Text("Uusi tapahtuma"),
-                        ),
-                      ],
                     ),
                   )
                 ],
@@ -417,90 +405,201 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                 title: Text(
                                                     'Tapahtuman ${e.id} muokkauslomake.'),
                                                 content: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8),
-                                                  child: Column(
-                                                    children: [
-                                                      TextField(
-                                                        controller:
-                                                            _customerController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'nimi -> ${e.customerName}'),
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    child: Form(
+                                                      key: _formKey,
+                                                      child: Column(
+                                                        children: [
+                                                          TextFormField(
+                                                            validator: (value) {
+                                                              if (value!
+                                                                      .length >
+                                                                  35) {
+                                                                return 'Max. 35 merkkiä!';
+                                                              }
+                                                              return null;
+                                                            },
+                                                            controller:
+                                                                _customerController,
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'nimi -> ${e.customerName}'),
+                                                          ),
+                                                          TextFormField(
+                                                            validator: (value) {
+                                                              if (value ==
+                                                                      null ||
+                                                                  value
+                                                                      .isEmpty) {
+                                                                return null;
+                                                              } else if (value
+                                                                          .length >
+                                                                      13 ||
+                                                                  value.length <
+                                                                      7) {
+                                                                return 'Tarkista puhelinnumero!';
+                                                              }
+                                                              return null;
+                                                            },
+                                                            controller:
+                                                                _phoneController,
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'Puhelin -> ${e.customerPhone}'),
+                                                          ),
+                                                          TextFormField(
+                                                            validator: (value) {
+                                                              if (value ==
+                                                                      null ||
+                                                                  value
+                                                                      .isEmpty) {
+                                                                return null;
+                                                              } else if (value
+                                                                          .length >
+                                                                      35 ||
+                                                                  value.length <
+                                                                      4) {
+                                                                return 'Tarkista sähköposti!';
+                                                              }
+                                                              return null;
+                                                            },
+                                                            controller:
+                                                                _emailController,
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'Email -> ${e.customerEmail}'),
+                                                          ),
+                                                          TextFormField(
+                                                            controller:
+                                                                _startDateController
+                                                                  ..text = e
+                                                                      .orderStartDate
+                                                                      .substring(
+                                                                          0,
+                                                                          10),
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'Alkaa ->  ${e.orderStartDate.substring(0, 10)}'),
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                            inputFormatters: [
+                                                              DateTextFormatter()
+                                                            ],
+                                                          ),
+                                                          TextFormField(
+                                                            validator: (value) {
+                                                              if (value ==
+                                                                  '0') {
+                                                                return 'Kesto ei voi olla 0!';
+                                                              }
+                                                              return null;
+                                                            },
+                                                            controller:
+                                                                _orderLengthController
+                                                                  ..text = e
+                                                                      .orderLengthDays
+                                                                      .toString(),
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'Kesto -> ${e.orderLengthDays}'),
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                            inputFormatters: <TextInputFormatter>[
+                                                              FilteringTextInputFormatter
+                                                                  .digitsOnly
+                                                            ],
+                                                          ),
+                                                          TextFormField(
+                                                            controller:
+                                                                _priceController,
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'Hinta -> ${e.price}'),
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                          ),
+                                                          TextFormField(
+                                                            controller:
+                                                                _dueDateController,
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'Maksupäivä  -> ${e.orderDue.substring(0, 10)} '),
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                            inputFormatters: [
+                                                              DateTextFormatter()
+                                                            ],
+                                                          ),
+                                                          TextFormField(
+                                                            controller:
+                                                                _orderStatusController,
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'Tilanne -> ${e.orderStatus}'),
+                                                          ),
+                                                          TextFormField(
+                                                            validator: (value) {
+                                                              if (value ==
+                                                                      null ||
+                                                                  value
+                                                                      .isEmpty) {
+                                                                return null;
+                                                              } else if (value !=
+                                                                      '1' ||
+                                                                  value !=
+                                                                      '0') {
+                                                                return 'Arvon tulee olla 1 tai 0!';
+                                                              }
+                                                              return null;
+                                                            },
+                                                            controller:
+                                                                _paymentResolvedController,
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'Maksettu (1/0) -> ${e.paymentResolved}'),
+                                                            keyboardType:
+                                                                TextInputType
+                                                                    .number,
+                                                            inputFormatters: <TextInputFormatter>[
+                                                              FilteringTextInputFormatter
+                                                                  .digitsOnly
+                                                            ],
+                                                          ),
+                                                          TextFormField(
+                                                            validator: (value) {
+                                                              if (value!
+                                                                      .length >
+                                                                  300) {
+                                                                return 'Viestin enimmäispituus on 300 merkkiä.';
+                                                              }
+                                                              return null;
+                                                            },
+                                                            controller:
+                                                                _messageController,
+                                                            decoration:
+                                                                InputDecoration(
+                                                                    helperText:
+                                                                        'Lisätiedot -> ${e.message}'),
+                                                          ),
+                                                        ],
                                                       ),
-                                                      TextField(
-                                                        controller:
-                                                            _phoneController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'Puhelin -> ${e.customerPhone}'),
-                                                      ),
-                                                      TextField(
-                                                        controller:
-                                                            _emailController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'Email -> ${e.customerEmail}'),
-                                                      ),
-                                                      TextField(
-                                                        controller:
-                                                            _startDateController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'Alkaa ->  ${e.orderStartDate.substring(0, 10)}'),
-                                                      ),
-                                                      TextField(
-                                                        controller:
-                                                            _orderLengthController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'Kesto -> ${e.orderLengthDays}'),
-                                                      ),
-                                                      TextField(
-                                                        controller:
-                                                            _priceController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'Hinta -> ${e.price}'),
-                                                      ),
-                                                      TextField(
-                                                        controller:
-                                                            _dueDateController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'Maksupäivä  -> ${e.orderDue.substring(0, 10)} '),
-                                                      ),
-                                                      TextField(
-                                                        controller:
-                                                            _orderStatusController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'Tilanne -> ${e.orderStatus}'),
-                                                      ),
-                                                      TextField(
-                                                        controller:
-                                                            _paymentResolvedController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'Maksettu (1/0) -> ${e.paymentResolved}'),
-                                                      ),
-                                                      TextField(
-                                                        controller:
-                                                            _messageController,
-                                                        decoration: InputDecoration(
-                                                            helperText:
-                                                                'Lisätiedot -> ${e.message}'),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
+                                                    )),
                                                 actions: [
                                                   TextButton(
-<<<<<<< Updated upstream
-                                                    onPressed: () {
-                                                      editEvent(e.id);
-                                                      Navigator.pop(context);
-=======
                                                       onPressed: () {
                                                         _selectedEvents.value =
                                                             _getEventsForDay(
@@ -520,7 +619,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                         Navigator.pop(context);
                                                         initializeData();
                                                       }
->>>>>>> Stashed changes
                                                     },
                                                     child:
                                                         const Text('Päivitä'),
@@ -530,11 +628,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                             );
                                           }),
                                           textBtn(context, 'Poista', () {
-<<<<<<< Updated upstream
-                                            deleteEvent(e.id);
-                                            _selectedEvents.value =
-                                                _getEventsForDay(_selectedDay!);
-=======
                                             showDialog(
                                                 context: context,
                                                 builder: (BuildContext
@@ -577,7 +670,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                       ],
                                                     ));
                                             ;
->>>>>>> Stashed changes
                                           }),
                                         ],
                                       ),
@@ -594,8 +686,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
             ],
           ),
         ),
-<<<<<<< Updated upstream
-=======
         floatingActionButton: FloatingActionButton(
           heroTag: "btn2",
           shape: CircleBorder(),
@@ -739,7 +829,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
           child: const Icon(Icons.add),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
->>>>>>> Stashed changes
       ),
     );
   }
@@ -758,60 +847,68 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
       ),
     );
   }
+}
 
-// UUSI TAPAHTUMA LOMAKE
-  AlertDialog _dialogWidget(BuildContext context) {
-    return AlertDialog.adaptive(
-      scrollable: true,
-      title: const Text('Uusi tapahtuma'),
-      content: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          children: [
-            TextField(
-              controller: _customerController,
-              decoration: const InputDecoration(helperText: 'Asiakkaan nimi'),
-            ),
-            TextField(
-              controller: _phoneController,
-              decoration: const InputDecoration(helperText: 'Puhelin'),
-            ),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(helperText: 'Email'),
-            ),
-            TextField(
-              controller: _orderLengthController,
-              decoration:
-                  const InputDecoration(helperText: 'Kesto (pelkkä numero)'),
-            ),
-            TextField(
-              controller: _priceController,
-              decoration:
-                  const InputDecoration(helperText: 'Hinta (pelkkä numero)'),
-            ),
-            TextField(
-              controller: _dueDateController,
-              decoration:
-                  const InputDecoration(helperText: 'Maksupäivä (YYYY-MM-DD)'),
-            ),
-            TextField(
-              controller: _messageController,
-              decoration: const InputDecoration(helperText: 'Lisätiedot'),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        ElevatedButton(
-            onPressed: () {
-              postEvent();
-              _selectedEvents.value = _getEventsForDay(_selectedDay!);
-              clearController();
-              context.pop();
-            },
-            child: const Text('Tallenna')),
-      ],
+class DateTextFormatter extends TextInputFormatter {
+  static const _maxChars = 8;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String separator = '-';
+    var text = _format(
+      newValue.text,
+      oldValue.text,
+      separator,
     );
+
+    return newValue.copyWith(
+      text: text,
+      selection: updateCursorPosition(
+        oldValue,
+        text,
+      ),
+    );
+  }
+
+  String _format(
+    String value,
+    String oldValue,
+    String separator,
+  ) {
+    var isErasing = value.length < oldValue.length;
+    var isComplete = value.length > _maxChars + 2;
+
+    if (!isErasing && isComplete) {
+      return oldValue;
+    }
+
+    value = value.replaceAll(separator, '');
+    final result = <String>[];
+
+    for (int i = 0; i < math.min(value.length, _maxChars); i++) {
+      result.add(value[i]);
+      if ((i == 3 || i == 5) && i != value.length - 1) {
+        result.add(separator);
+      }
+    }
+
+    return result.join();
+  }
+
+  TextSelection updateCursorPosition(
+    TextEditingValue oldValue,
+    String text,
+  ) {
+    var endOffset = math.max(
+      oldValue.text.length - oldValue.selection.end,
+      0,
+    );
+
+    var selectionEnd = text.length - endOffset;
+
+    return TextSelection.fromPosition(TextPosition(offset: selectionEnd));
   }
 }
