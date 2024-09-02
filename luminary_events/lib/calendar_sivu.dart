@@ -280,17 +280,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                     flex: 5,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton.icon(
-                          icon: const Icon(Icons.add),
-                          onPressed: () {
-                            showDialog(
-                                context: context,
-                                builder: (_) => _dialogWidget(context));
-                          },
-                          label: const Text("Uusi tapahtuma"),
-                        ),
-                      ],
                     ),
                   )
                 ],
