@@ -39,12 +39,8 @@ class CalendarSivu extends StatefulWidget {
 class _EventCalendarScreenState extends State<CalendarSivu> {
   late final ValueNotifier<List<Event>> _selectedEvents;
   CalendarFormat _calendarFormat = CalendarFormat.month;
-  RangeSelectionMode _rangeSelectionMode = RangeSelectionMode
-      .disabled; // Can be toggled on/off by longpressing a date
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  DateTime? _rangeStart;
-  DateTime? _rangeEnd;
   final _formKey = GlobalKey<FormState>();
 
   //This is the controller used to edit the new events text field
@@ -69,7 +65,8 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
 
   void initializeData() async {
     await fetchData();
-    setState(() => {});
+    _selectedEvents.value = _getEventsForDay(_selectedDay!);
+    setState(() {});
   }
 
 //*GET EVENTS PER DAY
@@ -77,43 +74,13 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
     return kEvents[day] ?? [];
   }
 
-//*GET EVENT RANGE
-  List<Event> _getEventsForRange(DateTime start, DateTime end) {
-    final days = daysInRange(start, end);
-    return [
-      for (final day in days) ..._getEventsForDay(day),
-    ];
-  }
-
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     if (!isSameDay(_selectedDay, selectedDay)) {
       setState(() {
         _selectedDay = selectedDay;
         _focusedDay = focusedDay;
-        _rangeStart = null; // Important to clean those
-        _rangeEnd = null;
-        _rangeSelectionMode = RangeSelectionMode.toggledOff;
       });
       _selectedEvents.value = _getEventsForDay(selectedDay);
-    }
-  }
-
-  void _onRangeSelected(DateTime? start, DateTime? end, DateTime focusedDay) {
-    setState(() {
-      _selectedDay = null;
-      _focusedDay = focusedDay;
-      _rangeStart = start!;
-      _rangeEnd = end; //! exception error (null call a null value)
-      _rangeSelectionMode = RangeSelectionMode.toggledOn;
-    });
-
-    // *`start` or `end` could be null
-    if (start != null && end != null) {
-      _selectedEvents.value = _getEventsForRange(start, end);
-    } else if (start != null) {
-      _selectedEvents.value = _getEventsForDay(start);
-    } else if (end != null) {
-      _selectedEvents.value = _getEventsForDay(end);
     }
   }
 
@@ -146,10 +113,10 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
       var response = await http.delete(
           Uri.parse('${dotenv.env['BASEURL']}${dotenv.env['APIKEY']}/$id'));
       if (response.statusCode == 200) {
-        setState(() {
-          _selectedEvents.value.clear();
-          _getEventsForDay;
-        });
+        initializeData();
+        _selectedEvents.value.clear();
+        _getEventsForDay;
+        setState(() {});
       }
     } catch (e) {
       log('Exception: $e');
@@ -187,10 +154,8 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
           body: data);
       if (response.statusCode == 201) {
         log('data: $data');
-        setState(() {
-          _selectedEvents.value.clear();
-          _getEventsForDay;
-        });
+        initializeData();
+        setState(() {});
       } else {
         // If the server returns an error response, throw an exception
         throw Exception('Code: ${response.statusCode}. Failed to post data');
@@ -234,10 +199,8 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
           body: jsonData);
       if (response.statusCode == 201) {
         log('data: $jsonData');
-        setState(() {
-          _selectedEvents.value.clear();
-          _getEventsForDay;
-        });
+        initializeData();
+        setState(() {});
       } else {
         // If the server returns an error response, throw an exception
         throw Exception('Code: ${response.statusCode}. Failed to post data');
@@ -297,10 +260,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                 lastDay: kLastDay,
                 focusedDay: _focusedDay,
                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                rangeStartDay: _rangeStart,
-                rangeEndDay: _rangeEnd,
                 calendarFormat: _calendarFormat,
-                rangeSelectionMode: _rangeSelectionMode,
                 eventLoader: _getEventsForDay,
                 startingDayOfWeek: StartingDayOfWeek.monday,
                 calendarStyle: CalendarStyle(
@@ -319,7 +279,6 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                   outsideDaysVisible: false,
                 ),
                 onDaySelected: _onDaySelected,
-                onRangeSelected: _onRangeSelected,
                 onFormatChanged: (format) {
                   if (_calendarFormat != format) {
                     setState(() {
@@ -369,7 +328,8 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.all(8.0),
-                                                  child: Column(children: [
+                                                  child:
+                                                      Column(children: <Widget>[
                                                     Text(
                                                         'id: ${e.id} jätetty: ${e.orderCreatedAt.substring(5, 10)}, Tilanne: ${e.orderStatus}, hinta: ${e.price}'),
                                                     Text(
@@ -600,12 +560,12 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                 actions: [
                                                   TextButton(
                                                       onPressed: () {
+                                                        initializeData();
                                                         _selectedEvents.value =
                                                             _getEventsForDay(
                                                                 _selectedDay!);
                                                         clearController();
                                                         Navigator.pop(context);
-                                                        initializeData();
                                                       },
                                                       child:
                                                           const Text('Peru')),
@@ -614,9 +574,12 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                       if (_formKey.currentState!
                                                           .validate()) {
                                                         editEvent(e.id);
-                                                        clearController();
-                                                        Navigator.pop(context);
                                                         initializeData();
+                                                        clearController();
+                                                        _selectedEvents.value =
+                                                            _getEventsForDay(
+                                                                _selectedDay!);
+                                                        Navigator.pop(context);
                                                       }
                                                     },
                                                     child:
@@ -643,6 +606,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                       actions: [
                                                         TextButton(
                                                             onPressed: () {
+                                                              initializeData();
                                                               _selectedEvents
                                                                       .value =
                                                                   _getEventsForDay(
@@ -650,13 +614,13 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                               clearController();
                                                               Navigator.pop(
                                                                   context);
-                                                              initializeData();
                                                             },
                                                             child: const Text(
                                                                 'Peru')),
                                                         TextButton(
                                                             onPressed: () {
                                                               deleteEvent(e.id);
+                                                              initializeData();
                                                               _selectedEvents
                                                                       .value =
                                                                   _getEventsForDay(
@@ -803,22 +767,22 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                       actions: [
                         ElevatedButton(
                             onPressed: () {
+                              initializeData();
                               _selectedEvents.value =
                                   _getEventsForDay(_selectedDay!);
                               clearController();
                               Navigator.pop(context);
-                              initializeData();
                             },
                             child: const Text('Peru')),
                         ElevatedButton(
                             onPressed: () {
                               if (_formKey.currentState!.validate()) {
                                 postEvent();
+                                initializeData();
                                 _selectedEvents.value =
                                     _getEventsForDay(_selectedDay!);
                                 clearController();
                                 Navigator.pop(context);
-                                initializeData();
                               }
                             },
                             child: const Text('Tallenna')),
