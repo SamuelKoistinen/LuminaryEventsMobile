@@ -112,10 +112,10 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
     try {
       var response = await http.delete(
           Uri.parse('${dotenv.env['BASEURL']}${dotenv.env['APIKEY']}/$id'));
-      if (response.statusCode == 200) {
-        initializeData();
+      if (response.statusCode == 204) {
         _selectedEvents.value.clear();
         _getEventsForDay;
+        initializeData();
         setState(() {});
       }
     } catch (e) {
