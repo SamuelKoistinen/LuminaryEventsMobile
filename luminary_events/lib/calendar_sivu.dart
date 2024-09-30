@@ -215,6 +215,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(title: const Text("Tapahtumakalenteri")),
+        backgroundColor: const Color.fromARGB(255, 34, 32, 33),
         body: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,13 +225,13 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
               Row(
                 children: [
                   Flexible(
-                    flex: 3,
+                    flex: 9,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 14),
                       child: Text(
                         textAlign: TextAlign.center,
-                        DateFormat('dd-MM-yyyy').format(_selectedDay!),
+                        DateFormat.yMMMMd('fi_FI').format(_selectedDay!),
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -254,7 +255,7 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                         color: Theme.of(context).colorScheme.tertiaryContainer),
                     formatButtonVisible: false,
                     decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onInverseSurface)),
+                        color: const Color.fromARGB(255, 34, 32, 33))),
                 locale: 'fi_FI',
                 firstDay: kFirstDay,
                 lastDay: kLastDay,
@@ -265,16 +266,15 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                 startingDayOfWeek: StartingDayOfWeek.monday,
                 calendarStyle: CalendarStyle(
                   markerDecoration: BoxDecoration(
-                      border: Border.all(
-                          color:
-                              Theme.of(context).colorScheme.secondaryContainer),
+                      border: Border.all(),
                       color: Theme.of(context).colorScheme.primary),
+                  markerMargin: EdgeInsets.all(2),
                   selectedDecoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Theme.of(context).colorScheme.onTertiaryContainer),
+                      color: Theme.of(context).colorScheme.primaryContainer),
                   todayDecoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Theme.of(context).colorScheme.onTertiaryContainer),
+                      color: Theme.of(context).colorScheme.tertiaryContainer),
                   // Use `CalendarStyle` to customize the UI
                   outsideDaysVisible: false,
                 ),
@@ -293,15 +293,20 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
               const SizedBox(height: 10.0),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onInverseSurface),
+                decoration:
+                    BoxDecoration(color: Color.fromARGB(255, 34, 32, 33)),
                 child: ValueListenableBuilder(
                   builder: (context, value, _) {
+                    final formatter = DateFormat.yMMMMd('fi_FI');
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: value
                           .map((e) => Card(
-                              color: Color(0xFF2E2B38),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onInverseSurface,
                               child: Container(
                                 margin: const EdgeInsets.symmetric(
                                     vertical: 20, horizontal: 14),
@@ -314,12 +319,15 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.8,
                                           child: Column(
                                             children: [
                                               SizedBox(
                                                   child: Column(children: [
                                                 Text(
-                                                    maxLines: 5,
                                                     style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.w500,
@@ -328,19 +336,19 @@ class _EventCalendarScreenState extends State<CalendarSivu> {
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.all(8.0),
-                                                  child:
-                                                      Column(children: <Widget>[
+                                                  child: Column(children: [
                                                     Text(
-                                                        'id: ${e.id} jätetty: ${e.orderCreatedAt.substring(5, 10)}, Tilanne: ${e.orderStatus}, hinta: ${e.price}'),
-                                                    Text(
-                                                        'Tapahtuma ${e.orderStartDate.substring(5, 10)} - ${e.orderEndDate.substring(5, 10)}, Kesto: ${e.orderLengthDays} pv'),
-                                                    Text(
-                                                        'Maksutilanne: ${e.paymentResolved}, Eräpäivä: ${e.orderDue.substring(5, 10)}'),
-                                                    Text(
-                                                        'Email: ${e.customerEmail}'),
-                                                    Text(
-                                                        'Tele: ${e.customerPhone}'),
-                                                    Text('"${e.message}"'),
+                                                        'Luotu: ${formatter.format(DateTime.parse(e.orderCreatedAt))}\n'
+                                                        'Alkaa: ${formatter.format(DateTime.parse(e.orderStartDate))}\n'
+                                                        'Päättyy: ${formatter.format(DateTime.parse(e.orderEndDate))}\n'
+                                                        'Kesto päivissä:  ${e.orderLengthDays}\n'
+                                                        'Status:  ${e.orderStatus}\n'
+                                                        'Hinta: ${e.price} €\n'
+                                                        'Maksutilanne:  ${e.paymentResolved}\n'
+                                                        'Eräpäivä:  ${formatter.format(DateTime.parse(e.orderDue))}\n'
+                                                        'Viesti:  "  ${e.message}  "\n'
+                                                        'Email: ${e.customerEmail}\n'
+                                                        'Puh. ${e.customerPhone}'),
                                                   ]),
                                                 )
                                               ])),

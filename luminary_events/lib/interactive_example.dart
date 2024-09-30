@@ -59,7 +59,7 @@ class _InteractiveExampleState extends State<InteractiveExample> {
           const ItemAnimation(),
           const NeumorphicProperties(),
         ),
-        backgroundColor: const Color.fromARGB(255, 151, 151, 151),
+        backgroundColor: const Color.fromARGB(255, 34, 32, 33),
         margin: settings.margin,
         avoidBottomPadding: settings.avoidBottomPadding,
         handleAndroidBackButtonPress: settings.handleAndroidBackButtonPress,
