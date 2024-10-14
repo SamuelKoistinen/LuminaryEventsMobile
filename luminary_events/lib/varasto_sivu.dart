@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:expandable/expandable.dart';
 import 'package:flutter/foundation.dart';
@@ -112,27 +113,43 @@ class _MainScreen3State extends State<MainScreen3> {
     getDatabaseInfo();
   }
 
-  updateDevice(id, bool emptyIDs) async {
+  updateDevice(id, bool emptyIDs, int? currentStock, int? stockIncrease) async {
     String? sendPrice;
     _priceTextFieldValue == ""
         ? sendPrice = null
         : sendPrice = _priceTextFieldValue;
 
-    final response = await http.put(
-        Uri.parse("${dotenv.env['BASEURL']}devices/$id"),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: emptyIDs
-            ? jsonEncode({
-                "name": _nameTextFieldValue,
-                "price_per_day": sendPrice,
-                "total_stock": _stockTextFieldValue,
-                "current_stock": _stockTextFieldValue,
-                "sub_ids": "empty",
-              })
-            : jsonEncode(
-                {"name": _nameTextFieldValue, "price_per_day": sendPrice}));
+    String? sendTotalStock;
+    _stockTextFieldValue == ""
+        ? sendTotalStock = null
+        : sendTotalStock = _stockTextFieldValue;
+
+    String? sendCurrentStock;
+    if (_stockTextFieldValue == "") {
+      sendCurrentStock = null;
+    } else if (currentStock != null && stockIncrease != null) {
+      sendCurrentStock = (currentStock + stockIncrease).toString();
+    }
+
+    final response =
+        await http.put(Uri.parse("${dotenv.env['BASEURL']}devices/$id"),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: emptyIDs
+                ? jsonEncode({
+                    "name": _nameTextFieldValue,
+                    "price_per_day": sendPrice,
+                    "total_stock": _stockTextFieldValue,
+                    "current_stock": _stockTextFieldValue,
+                    "sub_ids": "empty",
+                  })
+                : jsonEncode({
+                    "name": _nameTextFieldValue,
+                    "price_per_day": sendPrice,
+                    "total_stock": sendTotalStock,
+                    "current_stock": sendCurrentStock
+                  }));
     if (response.statusCode == 201) {
     } else {
       throw Exception('Failed to send updated data');
@@ -669,7 +686,6 @@ class _MainScreen3State extends State<MainScreen3> {
                                                       .addAll(busySubIDs);
 
                                                   showDialog(
-                                                      barrierDismissible: false,
                                                       context: context,
                                                       builder: (context) =>
                                                           AlertDialog(
@@ -694,7 +710,7 @@ class _MainScreen3State extends State<MainScreen3> {
                                                                           crossAxisAlignment:
                                                                               CrossAxisAlignment.start,
                                                                           children: [
-                                                                            const Text('Huom: Jos muokkaat varastomäärää, tämä palauttaa sub-ID:t! Korjaa manuaalisesti jälkeenpäin'),
+                                                                            const Text('Huom: Jos vähennät varastomäärää, tämä palauttaa sub-ID:t! Kirjaa ne ylös ja korjaa käsin jälkeenpäin.'),
                                                                             TextField(
                                                                               onChanged: (value) {
                                                                                 setState(() {
@@ -952,10 +968,19 @@ class _MainScreen3State extends State<MainScreen3> {
                                                                                               child: const Text('Peruuta')),
                                                                                           ElevatedButton(
                                                                                               onPressed: () {
-                                                                                                if (device['total_stock'] != int.tryParse(_stockTextFieldValue) && _stockTextFieldValue != "") {
-                                                                                                  updateDevice(device['id'], true);
-                                                                                                } else {
-                                                                                                  updateDevice(device['id'], false);
+                                                                                                int? stockChange;
+                                                                                                int parsedNumber = int.parse(_stockTextFieldValue);
+
+                                                                                                if (parsedNumber > device['total_stock']) {
+                                                                                                  stockChange = (parsedNumber - device['total_stock']) as int?;
+                                                                                                }
+
+                                                                                                if (device['total_stock'] > int.tryParse(_stockTextFieldValue) && _stockTextFieldValue != "") {
+                                                                                                  updateDevice(device['id'], true, null, null);
+                                                                                                } else if (device['total_stock'] == int.tryParse(_stockTextFieldValue) && _stockTextFieldValue != "") {
+                                                                                                  updateDevice(device['id'], false, null, null);
+                                                                                                } else if (device['total_stock'] < int.tryParse(_stockTextFieldValue) && _stockTextFieldValue != "") {
+                                                                                                  updateDevice(device['id'], false, device['current_stock'], stockChange);
                                                                                                 }
                                                                                                 Navigator.of(context)
                                                                                                   ..pop()
