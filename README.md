@@ -1,4 +1,4 @@
-<h1 align="center">Luminary Events Oulu Web-development project</h1>
+<h1 align="center">Luminary Events Oulu Mobile App project</h1>
 
 
 <p align="center">
@@ -12,7 +12,7 @@
 This project was accomplished for the Oulu University of Applied Sciences "Company-Oriented Product Development" course
 by a group consisting of four members</p>
 <p align="center">
-The main goal for the project was to have a functioning and a good looking mobileapp for Luminary Events Oulu to accompany the already existing website.
+The main goal for the project was to have a functioning and a good looking mobile application for Luminary Events Oulu to accompany the already existing website.
 </p>
 <h2 align="center">Group Members</h2>
 
